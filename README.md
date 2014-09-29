@@ -32,7 +32,7 @@ This decoder does not suffer from this bug.
 
 ### Performance
 
-During development, I frequently compared the performance of this decoder with the one from Kevin Weiner, which is very well crafted and shows an impressive performance. I worked hard to deliver <i>comparable speed</i> and current testing indicates that my decoder is around 9% faster than Kevin Weiner's. However, this heavily depends on the set of images used for testing (see next paragraph) and the main reason for creating this GIF decoder was to avoid the aforementioned bug. So I do not persist on being faster, but I think this decoder delivers reasonable performance. Feel free to run your own tests! Any feedback is highly appreciated.
+During development, I frequently compared the performance of this decoder with the one from Kevin Weiner, which is very well crafted and shows an impressive performance. I worked hard to deliver <i>comparable speed</i> and current testing indicates that my decoder is around 9% faster than Kevin Weiner's. However, this heavily depends on the set of images used for testing (see next paragraph) and the main reason for creating this GIF decoder was to avoid the aforementioned bug. So I do not insist in being faster, but I think this decoder delivers reasonable performance. Feel free to run your own tests! Any feedback is highly appreciated.
 
 ### Images used during testing
 
