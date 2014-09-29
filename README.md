@@ -3,8 +3,6 @@ Open Imaging
 
 Currently this project only contains a GIF decoder. At a later point, it may contain other tools and libraries that deal with the creation and processing of images.
 
-<a href='https://pledgie.com/campaigns/26861'><img alt='Click here to lend your support to: GIF Image Decoder and make a donation at pledgie.com !' src='https://pledgie.com/campaigns/26861.png?skin_name=chrome' border='0' ></a>
-
 ## GIF Decoder
 
 A decoder capable of processing a GIF data stream to render the graphics contained in it. This implementation follows the official <A HREF="http://www.w3.org/Graphics/GIF/spec-gif89a.txt">GIF specification</A>.
@@ -40,6 +38,12 @@ During development, I frequently compared the performance of this decoder with t
 
 My testing set includes 22 different GIF images of various file sizes and image dimensions. The biggest one is about 5 MB, the smallest one is only 69 bytes, all together sum up to 22 MB. All but three are animated GIFs. Some have transparent backgrounds, some have optimized frames with smaller dimensions than the base canvas. One of the bigger files consists of 255 frames. Some images use interlacing. Three images cause an ArrayOutOfBoundsException in various other decoders.
 
-### Issues
+### Quirks
 
 <b>Background color:</b> If a GIF frame requires the next frame to be drawn on the background, a decoder would have to clear the canvas and then set it to the background color that is specified in the GIF's logical screen descriptor. Many GIFs that look like they should have a transparent background would then have an opaque background. Therefore this decoder only sets the canvas to the background color, if the next frame has no transparent color defined. Testing indicates that this approach works fine. However, you can still ask the decoder for the background color of the first frame and use it to set the background of BufferedImage objects obtained from the GIF.
+
+### Support Open Imaging
+
+Feel free to make a donation.
+
+<a href='https://pledgie.com/campaigns/26861'><img alt='Click here to lend your support to: GIF Image Decoder and make a donation at pledgie.com !' src='https://pledgie.com/campaigns/26861.png?skin_name=chrome' border='0' ></a>
