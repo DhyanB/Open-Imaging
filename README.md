@@ -8,7 +8,7 @@ Currently this project only contains a GIF decoder. At a later point, it may con
 A decoder capable of processing a GIF data stream to render the graphics contained in it. This implementation follows the official <A HREF="http://www.w3.org/Graphics/GIF/spec-gif89a.txt">GIF specification</A>.
 
 ### Example Usage
-```
+```java
 void example(final byte[] data) throws Exception {
 	final GifDecoder decoder = new GifDecoder();
 	final GifImage gif = decoder.read(data);
