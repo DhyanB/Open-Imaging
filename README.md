@@ -26,14 +26,14 @@ void example(final byte[] data) throws Exception {
 
 ### Compatibility
 
-Some GIF images cause a <a href="http://stackoverflow.com/questions/22259714/arrayindexoutofboundsexception-4096-while-reading-gif-file">ArrayIndexOutOfBoundsException: 4096</a> when using Java's `ImageIO.read` method. The decoder used in Apache Imaging and the well known decoder from <a href="http://www.fmsware.com/stuff/gif.html">Kevin Weiner</a> also show this bug.
+Some GIF images cause an <a href="http://stackoverflow.com/questions/22259714/arrayindexoutofboundsexception-4096-while-reading-gif-file">ArrayIndexOutOfBoundsException: 4096</a> when using Java's official `ImageIO.read` method. The decoder used in Apache Imaging and the one from <a href="http://www.fmsware.com/stuff/gif.html">Kevin Weiner</a> also show that behavior.
 
 This decoder does <i>not<i> suffer from this bug.
 
 ### Performance
 
-During development, I frequently compared the performance of this decoder with the one from Kevin Weiner, which is very well craftet and shows an impressive speed. I worked hard to deliver a <b>similar level of performance</b> and testing indicates that my decoder is around 9% faster than Kevin Weiner's. However, this heavily depends on the set of images used for testing (see next paragraph) and the main reason for creating another GIF decoder was to avoid the bug aforementioned. So I do not persist on being faster, but I think this decoder delivers reasonable performance. Feel free to do your own tests and share your experiences!
+During development, I frequently compared the performance of this decoder with the one from Kevin Weiner, which is very well crafted and shows an impressive performance. I worked hard to deliver <i>comparable speed</i> and current testing indicates that my decoder is around 9% faster than Kevin Weiner's. However, this heavily depends on the set of images used for testing (see next paragraph) and the main reason for creating this GIF decoder was to avoid the bug aforementioned. So I do not persist on being faster, but I think this decoder delivers reasonable performance. So feel free to run your own tests! Any feedback is highly appreciated.
 
 ### Images used during testing
 
-My testing set includes 22 different GIF images of various file sizes and image dimensions. The biggest one is about 5 MB, the smallest one is only 69 bytes, all together sum up to 22 MB. All but three are animated GIFs. Some have transparent backgrounds, some have optimized frames that are have smaller dimensions than the base canvas. One of the bigger files consists of 255 frames. Some images use interlacing. Three images cause an ArrayOutOfBoundsException in various other decoders.
+My testing set includes 22 different GIF images of various file sizes and image dimensions. The biggest one is about 5 MB, the smallest one is only 69 bytes, all together sum up to 22 MB. All but three are animated GIFs. Some have transparent backgrounds, some have optimized frames with smaller dimensions than the base canvas. One of the bigger files consists of 255 frames. Some images use interlacing. Three images cause an ArrayOutOfBoundsException in various other decoders.
