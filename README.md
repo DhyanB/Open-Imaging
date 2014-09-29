@@ -26,9 +26,9 @@ void example(final byte[] data) throws Exception {
 
 ### Compatibility
 
-Some GIF images cause a <a href="http://stackoverflow.com/questions/22259714/arrayindexoutofboundsexception-4096-while-reading-gif-file">ArrayIndexOutOfBoundsException: 4096</a> when using the official `com.sun.imageio.plugins.gif.GIFImageReader.read` method. The decoder used in Apache Imaging and the well known decoder from Kevin Weiner ( http://www.fmsware.com/stuff/gif.html ) also show this bug.
+Some GIF images cause a <a href="http://stackoverflow.com/questions/22259714/arrayindexoutofboundsexception-4096-while-reading-gif-file">ArrayIndexOutOfBoundsException: 4096</a> when using Java's `ImageIO.read` method. The decoder used in Apache Imaging and the well known decoder from <a href="http://www.fmsware.com/stuff/gif.html">Kevin Weiner</a> also show this bug.
 
-This decoder does not suffer from this bug.
+This decoder does <i>not<i> suffer from this bug.
 
 ### Performance
 
