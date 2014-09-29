@@ -28,11 +28,11 @@ void example(final byte[] data) throws Exception {
 
 Some GIF images cause an <a href="http://stackoverflow.com/questions/22259714/arrayindexoutofboundsexception-4096-while-reading-gif-file">ArrayIndexOutOfBoundsException: 4096</a> when using Java's official `ImageIO.read` method. The decoder used in Apache Imaging and the one from <a href="http://www.fmsware.com/stuff/gif.html">Kevin Weiner</a> also show that behavior.
 
-This decoder does <i>not<i> suffer from this bug.
+This decoder does not suffer from this bug.
 
 ### Performance
 
-During development, I frequently compared the performance of this decoder with the one from Kevin Weiner, which is very well crafted and shows an impressive performance. I worked hard to deliver <i>comparable speed</i> and current testing indicates that my decoder is around 9% faster than Kevin Weiner's. However, this heavily depends on the set of images used for testing (see next paragraph) and the main reason for creating this GIF decoder was to avoid the bug aforementioned. So I do not persist on being faster, but I think this decoder delivers reasonable performance. So feel free to run your own tests! Any feedback is highly appreciated.
+During development, I frequently compared the performance of this decoder with the one from Kevin Weiner, which is very well crafted and shows an impressive performance. I worked hard to deliver <i>comparable speed</i> and current testing indicates that my decoder is around 9% faster than Kevin Weiner's. However, this heavily depends on the set of images used for testing (see next paragraph) and the main reason for creating this GIF decoder was to avoid the bug aforementioned. So I do not persist on being faster, but I think this decoder delivers reasonable performance. Feel free to run your own tests! Any feedback is highly appreciated.
 
 ### Images used during testing
 
