@@ -46,12 +46,11 @@ During development, this decoder has been frequently compared with the one from 
     Runtime: 268593 ms
     Time per repetition: 1342 ms
 
-However, performance heavily depends on the set of images used for testing (see next paragraph) and the main motivation behind the development of this decoder wasn't speed but correctness. So I would not insist in being faster, but I think the decoder delivers reasonable performance.
+However, performance heavily depends on the set of images used for testing (see next paragraph) and the main motivation behind the development of this decoder wasn't speed but rather correctness. So I wouldn't insist in being faster, I just think the decoder delivers decent performance.
 
-Either way, feel free to run your own tests! Any feedback is highly appreciated. A basic JUnit test comes with the project. Just open `GifDecoderTest.java`, set `LOOPS` to a high value (e.g. 100) and start the test. When set to 100, both decoders will extract and render every single frame from all 22 images 100 times in a row. This is performed by the first two
-test methods.
+Either way, feel free to run your own tests! Any feedback is highly appreciated. A basic JUnit test comes with the package. Open `GifDecoderTest.java`, set `LOOPS` to a reasonable value and start the test. When `LOOPS` is set to 100, the first two test methods will let both decoders repeatedly create a buffered image for every single frame of 22 different images 100 times in a row.
 
-There is also a third test method that will decode a single image and write its frames to `/src/test/resources/output-frames/`. That is a short test I run frequently after changing the code to ensure correctness.
+There is also a third test method that will decode a single image and write its frames to `/src/test/resources/output-frames/`. This is a short test I run frequently after changing the code to ensure correctness.
 
 ### Images used during testing
 
