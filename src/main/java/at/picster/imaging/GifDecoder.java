@@ -8,19 +8,20 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-/* Copyright 2014 Dhyan Blum
-
- Licensed under the Apache License, Version 2.0 (the "License");
- you may not use this file except in compliance with the License.
- You may obtain a copy of the License at
-
- http://www.apache.org/licenses/LICENSE-2.0
-
- Unless required by applicable law or agreed to in writing, software
- distributed under the License is distributed on an "AS IS" BASIS,
- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- See the License for the specific language governing permissions and
- limitations under the License.
+/*
+ * Copyright 2014 Dhyan Blum
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *   
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 /**
  * <p>
@@ -56,11 +57,15 @@ import java.util.List;
 public final class GifDecoder {
 	final class BitReader {
 		// The index tells how much lower bits remain
-		private final int[] BITMASK = new int[] { 0, 1, 3, 7, 15, 31, 63, 127,
-				255, 511, 1023, 2047, 4095, 8191, 16383, 32767, 65535, 131071,
-				262143, 524287, 1048575, 2097151, 4194303, 8388607, 16777215,
-				33554431, 67108863, 134217727, 268435455, 536870911,
-				1073741823, 2147483647, -1 };
+		private final int[] MASK = new int[] { 0x00000000, 0x00000001,
+				0x00000003, 0x00000007, 0x0000000F, 0x0000001F, 0x0000003F,
+				0x0000007F, 0x000000FF, 0x000001FF, 0x000003FF, 0x000007FF,
+				0x00000FFF, 0x00001FFF, 0x00003FFF, 0x00007FFF, 0x0000FFFF,
+				0x0001FFFF, 0x0003FFFF, 0x0007FFFF, 0x000FFFFF, 0x001FFFFF,
+				0x003FFFFF, 0x007FFFFF, 0x00FFFFFF, 0x01FFFFFF, 0x03FFFFFF,
+				0x07FFFFFF, 0x0FFFFFFF, 0x1FFFFFFF, 0x3FFFFFFF, 0x7FFFFFFF,
+				0xFFFFFFFF };
+
 		private int bitPos; // Next bit to read
 		private final byte[] in; // Data array
 		private final int bitsTotal; // Total number of bits in the array
@@ -78,15 +83,15 @@ public final class GifDecoder {
 
 		private final int read(final int bits) {
 			// Byte indices: (bitPos / 8), (bitPos / 8) + 1, (bitPos / 8) + 2
-			final int i = bitPos >>> 3, j = i + 1, k = j + 1; // Byte = bit / 8
+			int i = bitPos >>> 3; // Byte = bit / 8
 			// Bits we'll shift to the right, AND 7 is the same as MODULO 8
 			final int rBits = bitPos & 7;
 			// Byte 0 to 2, AND to get their unsigned values
-			final int b0 = in[i] & 0xFF, b1 = in[j] & 0xFF, b2 = in[k] & 0xFF;
+			final int b0 = in[i++] & 0xFF, b1 = in[i++] & 0xFF, b2 = in[i] & 0xFF;
 			// Glue the bytes together, don't do more shifting than necessary
 			final int buf = ((b2 << 8 | b1) << 8 | b0) >>> rBits;
 			bitPos += bits;
-			return buf & BITMASK[bits]; // Kill the unwanted higher bits
+			return buf & MASK[bits]; // Kill the unwanted higher bits
 		}
 	}
 
