@@ -1,4 +1,4 @@
-package at.picster.imaging;
+package at.dhyan.open_imaging;
 
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
