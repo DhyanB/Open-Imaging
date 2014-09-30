@@ -26,17 +26,36 @@ void example(final byte[] data) throws Exception {
 
 ### Compatibility
 
-Some GIF images cause an <a href="http://stackoverflow.com/questions/22259714/arrayindexoutofboundsexception-4096-while-reading-gif-file">ArrayIndexOutOfBoundsException: 4096</a> when using Java's official `ImageIO.read` method. The decoder used in Apache Imaging and the one from <a href="http://www.fmsware.com/stuff/gif.html">Kevin Weiner</a> also show that behavior.
+Some GIF images cause an <a href="http://stackoverflow.com/questions/22259714/arrayindexoutofboundsexception-4096-while-reading-gif-file">ArrayIndexOutOfBoundsException: 4096</a> when using Java's official `ImageIO.read` method or the decoder used in Apache Imaging. <a href="http://www.fmsware.com/stuff/gif.html">Kevin Weiner's decoder</a> will either throw the same exception or render the frames of these images incorrectly.
 
 This decoder does not suffer from this bug.
 
 ### Performance
 
-During development, I frequently compared the performance of this decoder with the one from Kevin Weiner, which is very well crafted and shows an impressive performance. I worked hard to deliver <i>comparable speed</i> and current testing indicates that my decoder is around 9% faster than Kevin Weiner's. However, this heavily depends on the set of images used for testing (see next paragraph) and the main reason for creating this GIF decoder was to avoid the aforementioned bug. So I do not insist in being faster, but I think this decoder delivers reasonable performance. Feel free to run your own tests! Any feedback is highly appreciated.
+During development, this decoder has been frequently compared with the one from Kevin Weiner, which is well crafted and delivers high performance. I worked hard to deliver similar speed and current testing indicates that the decoder is about 10% faster than Kevin Weiner's:
+
+    RESULTS FOR OPEN IMAGING DECODER
+    Files: 22
+    Repetitions: 200
+    Total time: 240318 ms
+    Time per repetition: 1201 ms
+
+    RESULTS FOR KEVIN WEINER DECODER
+    Files: 22
+    Repetitions: 200
+    Runtime: 268593 ms
+    Time per repetition: 1342 ms
+
+However, performance heavily depends on the set of images used for testing (see next paragraph) and the main motivation behind the development of this decoder wasn't speed but correctness. So I would not insist in being faster, but I think the decoder delivers reasonable performance.
+
+Either way, feel free to run your own tests! Any feedback is highly appreciated. A basic JUnit test comes with the project. Just open `GifDecoderTest.java`, set `LOOPS` to a high value (e.g. 100) and start the test. When set to 100, both decoders will extract and render every single frame from all 22 images 100 times in a row. This is performed by the first two
+test methods.
+
+There is also a third test method that will decode a single image and write its frames to `/src/test/resources/output-frames/`. That is a short test I run frequently after changing the code to ensure correctness.
 
 ### Images used during testing
 
-My testing set includes 22 different GIF images of various file sizes and image dimensions. The biggest one is about 5 MB, the smallest one is only 69 bytes, all together sum up to 22 MB. All but three are animated GIFs. Some have transparent backgrounds, some have optimized frames with smaller dimensions than the base canvas. One of the bigger files consists of 255 frames. Some images use interlacing. Three images cause an ArrayOutOfBoundsException in various other decoders.
+The current testing set (see `/src/test/resources/input-images/`) includes 22 different GIF images of various file sizes and image dimensions. The biggest one is about 5 MB, the smallest one is only 69 bytes, all together sum up to 22 MB. All but three are animated GIFs. Some have transparent backgrounds, some have optimized frames with smaller dimensions than the base canvas. One of the bigger files consists of 255 frames. Some images use interlacing. Three images cause the mentioned ArrayOutOfBoundsException in various other decoders.
 
 ### Quirks
 
