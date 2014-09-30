@@ -26,9 +26,9 @@ void example(final byte[] data) throws Exception {
 
 ### Compatibility
 
-Some GIF images cause an <a href="http://stackoverflow.com/questions/22259714/arrayindexoutofboundsexception-4096-while-reading-gif-file">ArrayIndexOutOfBoundsException: 4096</a> when using Java's official `ImageIO.read` method or the decoder used in Apache Imaging. <a href="http://www.fmsware.com/stuff/gif.html">Kevin Weiner's decoder</a> will either throw the same exception or render the frames of these images incorrectly.
-
-This decoder does not suffer from this bug.
+* Support for GIF87a, GIF89a, animation, transparency and interlacing.
+* Independent from third party libraries. Just download `GifDecoder.java` and the `LICENSE` file.
+* Some GIF images cause an <a href="http://stackoverflow.com/questions/22259714/arrayindexoutofboundsexception-4096-while-reading-gif-file">ArrayIndexOutOfBoundsException: 4096</a> when using Java's official `ImageIO.read` method or the decoder used in Apache Imaging. <a href="http://www.fmsware.com/stuff/gif.html">Kevin Weiner's decoder</a> will either throw the same exception or render the frames of these images incorrectly. This decoder does not suffer from this bug.
 
 ### Performance
 
