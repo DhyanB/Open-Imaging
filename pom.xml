@@ -6,6 +6,10 @@
 	<version>1</version>
 	<name>Open Imaging</name>
 
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+	</properties>
+
 	<dependencies>
 
 		<!-- Use SLF4J with LOGBACK-CLASSIC as underlying logging framework. See 
