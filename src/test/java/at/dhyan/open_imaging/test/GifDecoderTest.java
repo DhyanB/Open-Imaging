@@ -26,7 +26,7 @@ public class GifDecoderTest {
 	static final String[] SINGLE = { "geo2" };
 
 	// Makes test variations easier
-	static final int LOOPS = 100;
+	static final int LOOPS = 1;
 	static final String[] FILENAMES = ALL; // SINGLE | ALL
 
 	public static byte[] readFile(final String pathname)
