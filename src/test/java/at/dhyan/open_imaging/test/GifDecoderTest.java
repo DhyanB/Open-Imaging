@@ -26,7 +26,7 @@ public class GifDecoderTest {
 	static final String[] SINGLE = { "geo2" };
 
 	// Makes test variations easier
-	static final int LOOPS = 1;
+	static final int LOOPS = 20;
 	static final String[] FILENAMES = ALL; // SINGLE | ALL
 
 	public static byte[] readFile(final String pathname)
@@ -135,6 +135,7 @@ public class GifDecoderTest {
 			System.out.println("Time per repetition: " + avg + " ms");
 			assertEquals(true, true);
 		} catch (final Exception e) {
+			e.printStackTrace();
 			assertEquals(true, false);
 		}
 	}
