@@ -56,16 +56,6 @@ import java.util.List;
  */
 public final class GifDecoder {
 	final class BitReader {
-		// The index tells how much lower bits remain
-		private final int[] MASK = new int[] { 0x00000000, 0x00000001,
-				0x00000003, 0x00000007, 0x0000000F, 0x0000001F, 0x0000003F,
-				0x0000007F, 0x000000FF, 0x000001FF, 0x000003FF, 0x000007FF,
-				0x00000FFF, 0x00001FFF, 0x00003FFF, 0x00007FFF, 0x0000FFFF,
-				0x0001FFFF, 0x0003FFFF, 0x0007FFFF, 0x000FFFFF, 0x001FFFFF,
-				0x003FFFFF, 0x007FFFFF, 0x00FFFFFF, 0x01FFFFFF, 0x03FFFFFF,
-				0x07FFFFFF, 0x0FFFFFFF, 0x1FFFFFFF, 0x3FFFFFFF, 0x7FFFFFFF,
-				0xFFFFFFFF };
-
 		private int bitPos; // Next bit to read
 		private final byte[] in; // Data array
 		private final int bitsTotal; // Total number of bits in the array
@@ -104,15 +94,15 @@ public final class GifDecoder {
 		private int nextCodeLimit; // Increase codeSize when nextCode == limit
 		private final int initCodeLimit; // First code limit
 
-		CodeTable(final GifFrame fr, final int[] colTbl) {
-			final int numColors = colTbl.length;
+		CodeTable(final GifFrame fr, final int[] activeColTbl) {
+			final int numColors = activeColTbl.length;
 			initCodeSize = fr.firstCodeSize;
-			initCodeLimit = (1 << initCodeSize) - 1; // 2^codeSize - 1
+			initCodeLimit = MASK[initCodeSize]; // 2^initCodeSize - 1
 			initTableSize = numColors + 2;
 			nextCode = initTableSize;
 			tbl = new int[4096][];
 			for (int c = 0; c < numColors; c++) {
-				tbl[c] = new int[] { colTbl[c] }; // Translated color
+				tbl[c] = new int[] { activeColTbl[c] }; // Translated color
 			}
 			tbl[numColors] = new int[] { numColors }; // CLEAR
 			tbl[numColors + 1] = new int[] { numColors + 1 }; // EOI
@@ -126,7 +116,7 @@ public final class GifDecoder {
 			if (nextCode < 4096) {
 				if (nextCode == nextCodeLimit && currCodeSize < 12) {
 					currCodeSize++; // Max code size is 12
-					nextCodeLimit = (1 << currCodeSize) - 1; // 2^codeSize - 1
+					nextCodeLimit = MASK[currCodeSize]; // 2^currCodeSize - 1
 				}
 				tbl[nextCode++] = indices;
 			}
@@ -345,9 +335,19 @@ public final class GifDecoder {
 		}
 	}
 
-	private final int[] decode(final GifFrame fr, final int[] colTbl) {
-		final CodeTable codes = new CodeTable(fr, colTbl);
+	// The index tells how much lower bits remain
+	static final int[] MASK = new int[] { 0x00000000, 0x00000001, 0x00000003,
+			0x00000007, 0x0000000F, 0x0000001F, 0x0000003F, 0x0000007F,
+			0x000000FF, 0x000001FF, 0x000003FF, 0x000007FF, 0x00000FFF,
+			0x00001FFF, 0x00003FFF, 0x00007FFF, 0x0000FFFF, 0x0001FFFF,
+			0x0003FFFF, 0x0007FFFF, 0x000FFFFF, 0x001FFFFF, 0x003FFFFF,
+			0x007FFFFF, 0x00FFFFFF, 0x01FFFFFF, 0x03FFFFFF, 0x07FFFFFF,
+			0x0FFFFFFF, 0x1FFFFFFF, 0x3FFFFFFF, 0x7FFFFFFF, 0xFFFFFFFF };
+
+	private final int[] decode(final GifFrame fr, final int[] activeColTbl) {
+		final CodeTable codes = new CodeTable(fr, activeColTbl);
 		final BitReader in = new BitReader(fr.data); // Incoming codes
+		final int clearCode = fr.clearCode, endOfInfoCode = fr.endOfInfoCode;
 		final int[] out = new int[fr.width * fr.height]; // Outgoing indices
 		final int[][] tbl = codes.tbl; // Code table
 		int outPos = 0; // Next insert position in the output array
@@ -358,12 +358,12 @@ public final class GifDecoder {
 		while (currCodeSize <= in.bitsAvailable()) {
 			final int prevCode = code;
 			code = in.read(currCodeSize); // Get next code in code stream
-			if (code == fr.clearCode) { // After a CLEAR table, there is
+			if (code == clearCode) { // After a CLEAR table, there is
 				currCodeSize = codes.clear(); // no previous code, so we need
 				code = in.read(currCodeSize); // to read a new previous code
 				outPos = writeIndices(out, outPos, tbl[code]); // Write code
 				continue; // Now back to the loop, we have a valid previous code
-			} else if (code == fr.endOfInfoCode) {
+			} else if (code == endOfInfoCode) {
 				break;
 			}
 			final int[] prevVals = tbl[prevCode];
@@ -484,7 +484,8 @@ public final class GifDecoder {
 	 * @return Index of the first byte after the color table
 	 */
 	private final int readColTbl(final byte[] in, final int[] colors, int i) {
-		for (int c = 0; c < colors.length; c++) {
+		final int numColors = colors.length;
+		for (int c = 0; c < numColors; c++) {
 			final int a = 0xFF; // Alpha 255 (opaque)
 			final int r = in[i++] & 0xFF; // 1st byte is red
 			final int g = in[i++] & 0xFF; // 2nd byte is green
@@ -545,10 +546,11 @@ public final class GifDecoder {
 	 * @return
 	 */
 	private final int readImgData(final GifFrame fr, final byte[] in, int i) {
+		final int fileSize = in.length;
 		fr.minCodeSize = in[i++] & 0xFF; // Read code size, go to block size
 		int j = i, imgDataSize = 0, imgDataPos = 0;
 		int subBlockSize = in[j++] & 0xFF; // Read first sub-block size
-		while (j < in.length && subBlockSize != 0) { // While block has data
+		while (j < fileSize && subBlockSize != 0) { // While block has data
 			imgDataSize += subBlockSize; // Add block size to sum of block sizes
 			j += subBlockSize; // Go to next block size
 			subBlockSize = in[j++] & 0xFF; // Read next block size
@@ -556,7 +558,7 @@ public final class GifDecoder {
 		fr.data = new byte[imgDataSize + 2]; // Will hold the LZW encoded data
 		final byte[] data = fr.data;
 		subBlockSize = in[i++] & 0xFF; // Read first sub-block size
-		while (i < in.length && subBlockSize != 0) { // While sub-block has data
+		while (i < fileSize && subBlockSize != 0) { // While sub-block has data
 			System.arraycopy(in, i, data, imgDataPos, subBlockSize); // Copy
 			imgDataPos += subBlockSize; // Move output data position
 			i += subBlockSize; // Go to next sub-block size
