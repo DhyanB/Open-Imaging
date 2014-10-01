@@ -241,7 +241,7 @@ public final class GifDecoder {
 
 		/**
 		 * Returns the background color for the first frame in this GIF image.
-		 * If the fame has a local color table, the returned color will be from
+		 * If the frame has a local color table, the returned color will be from
 		 * this table. If not, the color will be from the global color table. If
 		 * there is neither a local nor a global color table, 0 will be
 		 * returned.
@@ -335,7 +335,8 @@ public final class GifDecoder {
 		}
 	}
 
-	// The index tells how much lower bits remain
+	// If used as a bitmask, the index tells how much lower bits remain.
+	// May also be used to compute f(i) = (2^i) - 1.
 	static final int[] MASK = new int[] { 0x00000000, 0x00000001, 0x00000003,
 			0x00000007, 0x0000000F, 0x0000001F, 0x0000003F, 0x0000007F,
 			0x000000FF, 0x000001FF, 0x000003FF, 0x000007FF, 0x00000FFF,
