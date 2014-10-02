@@ -180,7 +180,7 @@ public final class GifDecoder {
 			final int w = fr.width, h = fr.height, group2, group3, group4;
 			final int[] dest = new int[pixels.length];
 			// Interlaced images are divided in 4 groups of pixel lines
-			group2 = (int) Math.ceil(h / 8.0); // Start index
+			group2 = (int) Math.ceil(h / 8.0); // Start index of group 2
 			group3 = group2 + (int) Math.ceil((h - 4) / 8.0); // Start index
 			group4 = group3 + (int) Math.ceil((h - 2) / 4.0); // Start index
 			// Group 1 contains every 8th line starting from 0
