@@ -89,7 +89,7 @@ public class GifDecoderTest {
 					decoder.read(in);
 					final int frameCount = decoder.getFrameCount();
 					for (int i = 0; i < frameCount; i++) {
-						final BufferedImage img = decoder.getFrame(i);
+						decoder.getFrame(i);
 					}
 				}
 			}
@@ -122,7 +122,7 @@ public class GifDecoderTest {
 							.read(data[f]);
 					final int frameCount = gifImage.getFrameCount();
 					for (int i = 0; i < frameCount; i++) {
-						final BufferedImage img = gifImage.getFrame(i);
+						gifImage.getFrame(i);
 					}
 				}
 			}
