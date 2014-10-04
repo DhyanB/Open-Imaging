@@ -3,6 +3,8 @@ package at.dhyan.open_imaging;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
+import java.io.IOException;
+import java.io.InputStream;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -51,7 +53,7 @@ import java.util.List;
  * </p>
  * 
  * @author Dhyan Blum
- * @version 1.0 September 2014
+ * @version 1.01 September 2014
  * 
  */
 public final class GifDecoder {
@@ -447,6 +449,26 @@ public final class GifDecoder {
 			}
 		}
 		return img;
+	}
+
+	/**
+	 * @param is
+	 *            Image data as input stream. This method will read from the
+	 *            input stream's current position. It will not reset the
+	 *            position before reading and won't reset or close the stream
+	 *            afterwards. Call these methods before and after calling this
+	 *            method as needed.
+	 * @return A GifImage object exposing the properties of the GIF image.
+	 * @throws ParseException
+	 *             If the image violates the GIF specification or is truncated.
+	 * @throws IOException
+	 */
+	public final GifImage read(final InputStream is) throws ParseException,
+			IOException {
+		final int numBytes = is.available();
+		final byte[] data = new byte[numBytes];
+		is.read(data, 0, numBytes);
+		return read(data);
 	}
 
 	/**
