@@ -71,6 +71,31 @@ public class GifDecoderTest {
 	}
 
 	@Test
+	public void testDecodeAndSaveFramesFromInputStream() throws Exception {
+		try {
+			final FileInputStream data = new FileInputStream(IN_FOLDER
+					+ "geo2.gif");
+			final at.dhyan.open_imaging.GifDecoder decoder = new at.dhyan.open_imaging.GifDecoder();
+			final at.dhyan.open_imaging.GifDecoder.GifImage gif = decoder
+					.read(data);
+			final int width = gif.getWidth();
+			final int height = gif.getHeight();
+			final int background = gif.getBackgroundColor();
+			final int frameCount = gif.getFrameCount();
+			for (int i = 0; i < frameCount; i++) {
+				final BufferedImage img = gif.getFrame(i);
+				writeFile(img, i);
+			}
+			assertEquals("width", 720, width);
+			assertEquals("height", 720, height);
+			assertEquals("frames", 45, frameCount);
+			assertEquals("background", -16777216, background);
+		} catch (final Exception e) {
+			assertEquals(true, false);
+		}
+	}
+
+	@Test
 	public void testKevinWeinerDecoder() {
 		try {
 			data = new byte[FILENAMES.length][];
