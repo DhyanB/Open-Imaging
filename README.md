@@ -24,6 +24,14 @@ void example(final byte[] data) throws Exception {
 }
 ```
 
+You can also read from an input stream, though it will be transformed into a byte array internally:
+
+```java
+	final FileInputStream data = new FileInputStream(IN_FOLDER + "some.gif");
+	final GifDecoder decoder = new GifDecoder();
+	final GifImage gif = decoder.read(data);
+```
+
 ### Compatibility
 
 * Support for GIF87a, GIF89a, animation, transparency and interlacing.
