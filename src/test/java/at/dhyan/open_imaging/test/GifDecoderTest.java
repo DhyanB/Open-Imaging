@@ -22,12 +22,12 @@ public class GifDecoderTest {
 	static final String[] ALL = new String[] { "sampletrans", "sample", "sign",
 			"smile", "cat", "steps", "dance", "stickman", "chicken", "mario",
 			"comic", "hands", "prom", "cradle", "hand", "run", "geo1", "cats",
-			"dancing", "geo2", "bubble", "space" };
+			"dancing", "geo2", "fish", "bubble", "space" };
 	static final String[] SINGLE = { "geo2" };
 
 	// Makes test variations easier
 	static final int LOOPS = 20;
-	static final String[] FILENAMES = ALL; // SINGLE | ALL
+	static final String[] FILENAMES = SINGLE; // SINGLE | ALL
 
 	public static byte[] readFile(final String pathname)
 			throws FileNotFoundException, IOException {
@@ -49,7 +49,7 @@ public class GifDecoderTest {
 	@Test
 	public void testDecodeAndSaveFrames() throws Exception {
 		try {
-			final byte[] data = readFile(IN_FOLDER + "geo2.gif");
+			final byte[] data = readFile(IN_FOLDER + SINGLE[0] + ".gif");
 			final at.dhyan.open_imaging.GifDecoder decoder = new at.dhyan.open_imaging.GifDecoder();
 			final at.dhyan.open_imaging.GifDecoder.GifImage gif = decoder
 					.read(data);
@@ -74,7 +74,7 @@ public class GifDecoderTest {
 	public void testDecodeAndSaveFramesFromInputStream() throws Exception {
 		try {
 			final FileInputStream data = new FileInputStream(IN_FOLDER
-					+ "geo2.gif");
+					+ SINGLE[0] + ".gif");
 			final at.dhyan.open_imaging.GifDecoder decoder = new at.dhyan.open_imaging.GifDecoder();
 			final at.dhyan.open_imaging.GifDecoder.GifImage gif = decoder
 					.read(data);
