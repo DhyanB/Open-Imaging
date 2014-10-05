@@ -549,9 +549,11 @@ public final class GifDecoder {
 			throws ParseException {
 		if (in.length < 6) { // Check first 6 bytes
 			throw new ParseException("Image is truncated.", 0);
-		} else if (in[in.length - 1] != 0x3B) { // Check last byte
-			throw new ParseException("Missing GIF trailer.", in.length - 1);
 		}
+		// Some GIFs don't have a trailer byte. That sucks.
+		// if (in[in.length - 1] != 0x3B) { // Check last byte
+		// throw new ParseException("Missing GIF trailer.", in.length - 1);
+		// }
 		img.header = new String(in, 0, 6);
 		if (!img.header.equals("GIF87a") && !img.header.equals("GIF89a")) {
 			throw new ParseException("Invalid GIF header.", 0);
