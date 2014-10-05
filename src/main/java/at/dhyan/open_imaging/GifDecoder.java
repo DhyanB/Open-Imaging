@@ -53,7 +53,7 @@ import java.util.List;
  * </p>
  * 
  * @author Dhyan Blum
- * @version 1.01 September 2014
+ * @version 1.02 September 2014
  * 
  */
 public final class GifDecoder {
