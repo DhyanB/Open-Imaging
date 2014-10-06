@@ -41,19 +41,19 @@ You can also read from an input stream, though it will be transformed into a byt
 
 ### Performance
 
-During development, this decoder has been frequently compared with the one from Kevin Weiner, which is well crafted and delivers high performance. I worked hard to deliver similar speed and current testing indicates that the decoder is about 10% faster than Kevin Weiner's:
+During development, this decoder has been frequently compared with the one from Kevin Weiner, which is well crafted and delivers high performance. I worked hard to deliver similar speed and current testing indicates that the decoder is about 12% faster than Kevin Weiner's:
 
-    RESULTS FOR OPEN IMAGING DECODER
-    Files: 22
-    Repetitions: 200
-    Total time: 240318 ms
-    Time per repetition: 1201 ms
+	RESULTS FOR OPEN IMAGING DECODER
+	Files: 24
+	Repetitions: 100
+	Total time: 128019 ms
+	Time per repetition: 1280 ms
 
-    RESULTS FOR KEVIN WEINER DECODER
-    Files: 22
-    Repetitions: 200
-    Runtime: 268593 ms
-    Time per repetition: 1342 ms
+	RESULTS FOR KEVIN WEINER DECODER
+	Files: 24
+	Repetitions: 100
+	Runtime: 144038 ms
+	Time per repetition: 1440 ms
 
 However, performance heavily depends on the set of images used for testing (see next paragraph) and the main motivation behind the development of this decoder wasn't speed but rather correctness. So I wouldn't insist in being faster, I just think the decoder delivers decent performance.
 
@@ -63,7 +63,7 @@ There is also a third test method that will decode a single image and write its 
 
 ### Images used during testing
 
-The current testing set (see `/src/test/resources/input-images/`) includes 22 different GIF images of various file sizes and image dimensions. The biggest one is about 5 MB, the smallest one is only 69 bytes, all together sum up to 22 MB. All but three are animated GIFs. Some have transparent backgrounds, some have optimized frames with smaller dimensions than the base canvas. One of the bigger files consists of 255 frames. Some images use interlacing. Three images cause the mentioned ArrayOutOfBoundsException in various other decoders.
+The current testing set (see `/src/test/resources/input-images/`) includes 24 different GIF images of various file sizes, image dimensions and other special characteristics. The biggest one is 5 MB (`space.gif`), the smallest one is only 69 bytes (`sample.gif`), all together sum up to 25 MB. All but three are animated GIFs. Some have transparent backgrounds, some have optimized frames with smaller dimensions than the base canvas. `bubble.gif` consists of 255 frames. Some images use interlacing (e.g. `hand.gif`). Three images cause the mentioned `ArrayOutOfBoundsException` in various other decoders. `fish.gif` does not have a trailer byte. `c64.gif` has a truncated `end of information` code at the end of the second frame.
 
 ### Quirks
 
