@@ -53,7 +53,7 @@ import java.util.List;
  * </p>
  * 
  * @author Dhyan Blum
- * @version 1.02 September 2014
+ * @version 1.03 September 2014
  * 
  */
 public final class GifDecoder {
@@ -100,14 +100,14 @@ public final class GifDecoder {
 			final int numColors = activeColTbl.length;
 			initCodeSize = fr.firstCodeSize;
 			initCodeLimit = MASK[initCodeSize]; // 2^initCodeSize - 1
-			initTableSize = numColors + 2;
+			initTableSize = fr.endOfInfoCode + 1;
 			nextCode = initTableSize;
 			tbl = new int[4096][];
 			for (int c = 0; c < numColors; c++) {
 				tbl[c] = new int[] { activeColTbl[c] }; // Translated color
-			}
-			tbl[numColors] = new int[] { numColors }; // CLEAR
-			tbl[numColors + 1] = new int[] { numColors + 1 }; // EOI
+			} // A gap may follow with no colors assigned if numCols < CLEAR
+			tbl[fr.clearCode] = new int[] { fr.clearCode }; // CLEAR
+			tbl[fr.endOfInfoCode] = new int[] { fr.endOfInfoCode }; // EOI
 			// Locate transparent color in code table and set to 0
 			if (fr.transpColFlag && fr.transpColIndex < numColors) {
 				tbl[fr.transpColIndex][0] = 0;
@@ -351,14 +351,15 @@ public final class GifDecoder {
 		final CodeTable codes = new CodeTable(fr, activeColTbl);
 		final BitReader in = new BitReader(fr.data); // Incoming codes
 		final int clearCode = fr.clearCode, endOfInfoCode = fr.endOfInfoCode;
-		final int[] out = new int[fr.width * fr.height]; // Outgoing indices
+		final int numPixels = fr.width * fr.height;
+		final int[] out = new int[numPixels]; // Outgoing pixels
 		final int[][] tbl = codes.tbl; // Code table
 		int outPos = 0; // Next insert position in the output array
 		int currCodeSize = codes.clear(); // Init code table
 		in.read(currCodeSize); // Skip leading clear code
 		int code = in.read(currCodeSize); // Read first code
 		outPos = writeIndices(out, outPos, tbl[code]); // Output 1st code
-		while (currCodeSize <= in.bitsAvailable()) {
+		while (outPos < numPixels) {
 			final int prevCode = code;
 			code = in.read(currCodeSize); // Get next code in code stream
 			if (code == clearCode) { // After a CLEAR table, there is
