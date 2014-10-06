@@ -20,14 +20,14 @@ public class GifDecoderTest {
 	static final String OUT_FOLDER = "src/test/resources/output-frames/";
 	static final String IN_FOLDER = "src/test/resources/input-images/";
 	static final String[] ALL = new String[] { "sampletrans", "sample", "sign",
-			"smile", "cat", "steps", "dance", "stickman", "chicken", "mario",
-			"comic", "hands", "prom", "cradle", "hand", "run", "geo1", "cats",
-			"dancing", "geo2", "fish", "bubble", "space" };
+			"c64", "smile", "cat", "steps", "dance", "stickman", "chicken",
+			"mario", "comic", "hands", "prom", "cradle", "hand", "run", "geo1",
+			"cats", "dancing", "geo2", "fish", "bubble", "space" };
 	static final String[] SINGLE = { "geo2" };
 
 	// Makes test variations easier
-	static final int LOOPS = 20;
-	static final String[] FILENAMES = SINGLE; // SINGLE | ALL
+	static final int LOOPS = 100;
+	static final String[] FILENAMES = ALL; // SINGLE | ALL
 
 	public static byte[] readFile(final String pathname)
 			throws FileNotFoundException, IOException {
@@ -66,6 +66,7 @@ public class GifDecoderTest {
 			assertEquals("frames", 45, frameCount);
 			assertEquals("background", -16777216, background);
 		} catch (final Exception e) {
+			e.printStackTrace();
 			assertEquals(true, false);
 		}
 	}
