@@ -22,8 +22,8 @@ public class GifDecoderTest {
 	static final String[] ALL = new String[] { "sampletrans", "sample", "sign",
 			"c64", "smile", "cat", "steps", "dance", "stickman", "chicken",
 			"mario", "comic", "hands", "prom", "cradle", "hand", "run", "geo1",
-			"cats", "dancing", "geo2", "fish", "bubble", "space" };
-	static final String[] SINGLE = { "geo2" };
+			"cats", "dancing", "geo2", "fish", "train", "bubble", "space" };
+	static final String[] SINGLE = { "prom" };
 
 	// Makes test variations easier
 	static final int LOOPS = 100;
@@ -61,37 +61,12 @@ public class GifDecoderTest {
 				final BufferedImage img = gif.getFrame(i);
 				writeFile(img, i);
 			}
-			assertEquals("width", 720, width);
-			assertEquals("height", 720, height);
-			assertEquals("frames", 45, frameCount);
-			assertEquals("background", -16777216, background);
+			assertEquals("width", 500, width);
+			assertEquals("height", 275, height);
+			assertEquals("frames", 71, frameCount);
+			assertEquals("background", -1385287, background);
 		} catch (final Exception e) {
 			e.printStackTrace();
-			assertEquals(true, false);
-		}
-	}
-
-	@Test
-	public void testDecodeAndSaveFramesFromInputStream() throws Exception {
-		try {
-			final FileInputStream data = new FileInputStream(IN_FOLDER
-					+ SINGLE[0] + ".gif");
-			final at.dhyan.open_imaging.GifDecoder decoder = new at.dhyan.open_imaging.GifDecoder();
-			final at.dhyan.open_imaging.GifDecoder.GifImage gif = decoder
-					.read(data);
-			final int width = gif.getWidth();
-			final int height = gif.getHeight();
-			final int background = gif.getBackgroundColor();
-			final int frameCount = gif.getFrameCount();
-			for (int i = 0; i < frameCount; i++) {
-				final BufferedImage img = gif.getFrame(i);
-				writeFile(img, i);
-			}
-			assertEquals("width", 720, width);
-			assertEquals("height", 720, height);
-			assertEquals("frames", 45, frameCount);
-			assertEquals("background", -16777216, background);
-		} catch (final Exception e) {
 			assertEquals(true, false);
 		}
 	}
@@ -115,7 +90,7 @@ public class GifDecoderTest {
 					decoder.read(in);
 					final int frameCount = decoder.getFrameCount();
 					for (int i = 0; i < frameCount; i++) {
-						decoder.getFrame(i);
+						final BufferedImage img = decoder.getFrame(i);
 					}
 				}
 			}
@@ -148,7 +123,7 @@ public class GifDecoderTest {
 							.read(data[f]);
 					final int frameCount = gifImage.getFrameCount();
 					for (int i = 0; i < frameCount; i++) {
-						gifImage.getFrame(i);
+						final BufferedImage img = gifImage.getFrame(i);
 					}
 				}
 			}
