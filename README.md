@@ -41,29 +41,29 @@ You can also read from an input stream, though it will be transformed into a byt
 
 ### Performance
 
-During development, this decoder has been frequently compared with the one from Kevin Weiner, which is well crafted and delivers high performance. I worked hard to deliver similar speed and current testing indicates that the decoder is about 12% faster than Kevin Weiner's:
+During development, this decoder has been frequently compared with the one from Kevin Weiner, which is well crafted and delivers high performance. I worked hard to deliver similar speed and current testing indicates that the decoder is about 10% faster than Kevin Weiner's:
 
 	RESULTS FOR OPEN IMAGING DECODER
-	Files: 24
+	Files: 25
 	Repetitions: 100
-	Total time: 128019 ms
-	Time per repetition: 1280 ms
+	Total time: 147263 ms
+	Time per repetition: 1472 ms
 
 	RESULTS FOR KEVIN WEINER DECODER
-	Files: 24
+	Files: 25
 	Repetitions: 100
-	Runtime: 144038 ms
-	Time per repetition: 1440 ms
+	Runtime: 162479 ms
+	Time per repetition: 1624 ms
 
 However, performance heavily depends on the set of images used for testing (see next paragraph) and the main motivation behind the development of this decoder wasn't speed but rather correctness. So I wouldn't insist in being faster, I just think the decoder delivers decent performance.
 
-Either way, feel free to run your own tests! Any feedback is highly appreciated. A basic JUnit test comes with the package. Open `GifDecoderTest.java`, set `LOOPS` to a reasonable value and start the test. When `LOOPS` is set to 100, the first two test methods will let both decoders repeatedly create a buffered image for every single frame of 22 different images 100 times in a row.
+Either way, feel free to run your own tests! Any feedback is highly appreciated. A basic JUnit test comes with the package. Open `GifDecoderTest.java`, set `LOOPS` to a reasonable value and start the test. When `LOOPS` is set to 100, the first two test methods will let both decoders repeatedly create a buffered image for every single frame of every test image 100 times in a row.
 
 There is also a third test method that will decode a single image and write its frames to `/src/test/resources/output-frames/`. This is a short test I run frequently after changing the code to ensure correctness.
 
 ### Images used during testing
 
-The current testing set (see `/src/test/resources/input-images/`) includes 24 different GIF images of various file sizes, image dimensions and other special characteristics. The biggest one is 5 MB (`space.gif`), the smallest one is only 69 bytes (`sample.gif`), all together sum up to 25 MB. All but three are animated GIFs. Some have transparent backgrounds, some have optimized frames with smaller dimensions than the base canvas. `bubble.gif` consists of 255 frames. Some images use interlacing (e.g. `hand.gif`). Three images cause the mentioned `ArrayOutOfBoundsException` in various other decoders. `fish.gif` does not have a trailer byte. `c64.gif` has a truncated `end of information` code at the end of the second frame.
+The current testing set (see `/src/test/resources/input-images/`) consists of 25 different GIF images of various file sizes, image dimensions and other special characteristics. The biggest one is 5 MB (`space.gif`), the smallest one is only 69 bytes (`sample.gif`), all together sum up to 25 MB. All but three are animated GIFs. Some have transparent backgrounds, some have optimized frames with smaller dimensions than the base canvas. `bubble.gif` consists of 255 frames. Some images use interlacing (e.g. `hand.gif`). Three images cause the mentioned `ArrayOutOfBoundsException` in various other decoders. `fish.gif` does not have a trailer byte. `c64.gif` has a truncated `end of information` code at the end of the second frame. `train.gif` has a truncated image data sub-block at the end of the last frame.
 
 ### Quirks
 
