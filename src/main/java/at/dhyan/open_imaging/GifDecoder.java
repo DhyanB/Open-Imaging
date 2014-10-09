@@ -53,24 +53,18 @@ import java.util.List;
  * </p>
  * 
  * @author Dhyan Blum
- * @version 1.03 September 2014
+ * @version 1.04 September 2014
  * 
  */
 public final class GifDecoder {
 	final class BitReader {
 		private int bitPos; // Next bit to read
 		private final byte[] in; // Data array
-		private final int bitsTotal; // Total number of bits in the array
 
 		// To avoid costly bounds checks, 'in' needs 3 more 0-bytes at the end
 		BitReader(final byte[] in) {
 			this.in = in;
 			bitPos = 0;
-			bitsTotal = in.length << 3; // array length * 8 = number of bits
-		}
-
-		private final int bitsAvailable() {
-			return bitsTotal - bitPos;
 		}
 
 		private final int read(final int bits) {
@@ -361,7 +355,11 @@ public final class GifDecoder {
 		outPos = writeIndices(out, outPos, tbl[code]); // Output 1st code
 		while (outPos < numPixels) {
 			final int prevCode = code;
-			code = in.read(currCodeSize); // Get next code in code stream
+			try {
+				code = in.read(currCodeSize); // Get next code in code stream
+			} catch (final ArrayIndexOutOfBoundsException e) {
+				break; // No more codes available
+			}
 			if (code == clearCode) { // After a CLEAR table, there is
 				currCodeSize = codes.clear(); // no previous code, so we need
 				code = in.read(currCodeSize); // to read a new previous code
@@ -446,7 +444,7 @@ public final class GifDecoder {
 			case 0x3B: // GIF Trailer
 				return img; // Found trailer, finished reading.
 			default:
-				throw new ParseException("Unknown block.", pos);
+				throw new ParseException("Unknown block: " + pos, pos);
 			}
 		}
 		return img;
@@ -551,10 +549,6 @@ public final class GifDecoder {
 		if (in.length < 6) { // Check first 6 bytes
 			throw new ParseException("Image is truncated.", 0);
 		}
-		// Some GIFs don't have a trailer byte. That sucks.
-		// if (in[in.length - 1] != 0x3B) { // Check last byte
-		// throw new ParseException("Missing GIF trailer.", in.length - 1);
-		// }
 		img.header = new String(in, 0, 6);
 		if (!img.header.equals("GIF87a") && !img.header.equals("GIF89a")) {
 			throw new ParseException("Invalid GIF header.", 0);
@@ -574,26 +568,53 @@ public final class GifDecoder {
 	private final int readImgData(final GifFrame fr, final byte[] in, int i) {
 		final int fileSize = in.length;
 		fr.minCodeSize = in[i++] & 0xFF; // Read code size, go to block size
-		int j = i, imgDataSize = 0, imgDataPos = 0;
-		int subBlockSize = in[j++] & 0xFF; // Read first sub-block size
-		while (j < fileSize && subBlockSize != 0) { // While block has data
-			imgDataSize += subBlockSize; // Add block size to sum of block sizes
-			j += subBlockSize; // Go to next block size
-			subBlockSize = in[j++] & 0xFF; // Read next block size
-		}
-		fr.data = new byte[imgDataSize + 2]; // Will hold the LZW encoded data
-		final byte[] data = fr.data;
-		subBlockSize = in[i++] & 0xFF; // Read first sub-block size
-		while (i < fileSize && subBlockSize != 0) { // While sub-block has data
-			System.arraycopy(in, i, data, imgDataPos, subBlockSize); // Copy
-			imgDataPos += subBlockSize; // Move output data position
-			i += subBlockSize; // Go to next sub-block size
-			subBlockSize = in[i++] & 0xFF; // Read next sub-block size
-		}
 		fr.firstCodeSize = fr.minCodeSize + 1; // Add 1 bit for CLEAR and EOI
 		fr.clearCode = 1 << fr.minCodeSize; // CLEAR = 2^minCodeSize
 		fr.endOfInfoCode = fr.clearCode + 1; // EOI
+		final int imgDataSize = readImgDataSize(in, i);
+		final byte[] imgData = new byte[imgDataSize + 2];
+		int imgDataPos = 0;
+		int subBlockSize = in[i] & 0xFF;
+		while (subBlockSize > 0) { // While block has data
+			try { // Next line may throw exception if sub-block size is fake
+				final int nextSubBlockSize = in[i + subBlockSize + 1] & 0xFF;
+				System.arraycopy(in, i + 1, imgData, imgDataPos, subBlockSize);
+				imgDataPos += subBlockSize; // Move output data position
+				i += subBlockSize + 1; // Move to next sub-block size
+				subBlockSize = nextSubBlockSize;
+			} catch (final Exception e) {
+				// Sub-block exceeds file end, only use remaining bytes
+				subBlockSize = fileSize - i - 1; // Remaining bytes
+				System.arraycopy(in, i + 1, imgData, imgDataPos, subBlockSize);
+				imgDataPos += subBlockSize; // Move output data position
+				i += subBlockSize + 1; // Move to next sub-block size
+				break;
+			}
+		}
+		fr.data = imgData; // Holds LZW encoded data
+		i++; // Skip last sub-block size, should be 0
 		return i;
+	}
+
+	private final int readImgDataSize(final byte[] in, int i) {
+		final int fileSize = in.length;
+		int imgDataPos = 0;
+		int subBlockSize = in[i] & 0xFF;
+		while (subBlockSize > 0) { // While block has data
+			try { // Next line may throw exception if sub-block size is fake
+				final int nextSubBlockSize = in[i + subBlockSize + 1] & 0xFF;
+				imgDataPos += subBlockSize; // Move output data position
+				i += subBlockSize + 1; // Move to next sub-block size
+				subBlockSize = nextSubBlockSize;
+			} catch (final Exception e) {
+				// Sub-block exceeds file end, only use remaining bytes
+				subBlockSize = fileSize - i - 1; // Remaining bytes
+				imgDataPos += subBlockSize; // Move output data position
+				i += subBlockSize + 1; // Move to next sub-block size
+				break;
+			}
+		}
+		return imgDataPos;
 	}
 
 	/**
