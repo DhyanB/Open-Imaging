@@ -39,8 +39,7 @@ import java.util.List;
  * <p>
  * 
  * <pre>
- * final GifEncoder decoder = new GifEncoder();
- * final GifImage gifImage = decoder.read(int[] data);
+ * final GifImage gifImage = GifEncoder.read(int[] data);
  * final int width = gifImage.getWidth();
  * final int height = gifImage.getHeight();
  * final int frameCount = gifImage.getFrameCount();
@@ -53,16 +52,16 @@ import java.util.List;
  * </p>
  * 
  * @author Dhyan Blum
- * @version 1.04 September 2014
+ * @version 1.05 September 2014
  * 
  */
 public final class GifDecoder {
 	final class BitReader {
 		private int bitPos; // Next bit to read
-		private final byte[] in; // Data array
+		private byte[] in; // Data array
 
 		// To avoid costly bounds checks, 'in' needs 3 more 0-bytes at the end
-		BitReader(final byte[] in) {
+		private final void init(final byte[] in) {
 			this.in = in;
 			bitPos = 0;
 		}
@@ -141,7 +140,7 @@ public final class GifDecoder {
 		private int height; // May be smaller than the base image
 		private boolean hasLocColTbl; // Has local color table? 1 Bit
 		private boolean interlaceFlag; // Is an interlace image? 1 Bit
-		private boolean sortFlag; // Are colors sorted? 1 Bit
+		private boolean sortFlag; // True if local colors are sorted, 1 Bit
 		private int sizeOfLocColTbl; // Size of the local color table, 3 Bits
 		private int[] localColTbl; // Local color table (optional)
 		// Image data
@@ -157,11 +156,11 @@ public final class GifDecoder {
 		private int width; // Unsigned 16 Bit, least significant byte first
 		private int height; // Unsigned 16 Bit, least significant byte first
 		public boolean hasGlobColTbl; // 1 Bit
-		private int colorResolution; // 3 Bits
-		private boolean sortFlag; // Whether colors are sorted, 1 Bit
+		public int colorResolution; // 3 Bits
+		public boolean sortFlag; // True if global colors are sorted, 1 Bit
 		public int sizeOfGlobColTbl; // 2^(val(3 Bits) + 1), see spec
 		public int bgColIndex; // Background color index, 1 Byte
-		private int pxAspectRatio; // Pixel aspect ratio, 1 Byte
+		public int pxAspectRatio; // Pixel aspect ratio, 1 Byte
 		public int[] globalColTbl; // Global color table
 		private final List<GifFrame> frames = new ArrayList<GifFrame>();
 		public String appId = ""; // 8 Bytes at in[i+3], usually "NETSCAPE"
@@ -171,6 +170,57 @@ public final class GifDecoder {
 		private BufferedImage prevImg = null; // Last drawn frame
 		private int prevIndex; // Index of the last drawn frame
 		private int prevDisposal; // Disposal of the previous frame
+		private final BitReader in = new BitReader();
+
+		private final int[] decode(final GifFrame fr, final int[] activeColTbl) {
+			final CodeTable codes = new CodeTable(fr, activeColTbl);
+			in.init(fr.data); // Incoming codes
+			final int clearCode = fr.clearCode, endCode = fr.endOfInfoCode;
+			final int numPixels = fr.width * fr.height;
+			final int[] out = new int[numPixels]; // Target image pixel array
+			final int[][] tbl = codes.tbl; // Code table
+			int pixelPos = 0; // Next pixel position in the output image array
+			int currCodeSize = codes.clear(); // Init code table
+			in.read(currCodeSize); // Skip leading clear code
+			int code = in.read(currCodeSize); // Read first code
+			int[] pixels = tbl[code]; // Output pixel for first code
+			System.arraycopy(pixels, 0, out, pixelPos, pixels.length);
+			pixelPos += pixels.length;
+			while (pixelPos < numPixels) {
+				final int prevCode = code;
+				try {
+					code = in.read(currCodeSize); // Get next code in stream
+				} catch (final ArrayIndexOutOfBoundsException e) {
+					break;
+				}
+				if (code == clearCode) { // After a CLEAR table, there is
+					currCodeSize = codes.clear(); // No previous code, we need
+					code = in.read(currCodeSize); // to read a new previous code
+					pixels = tbl[code]; // Output pixels
+					System.arraycopy(pixels, 0, out, pixelPos, pixels.length);
+					pixelPos += pixels.length;
+					continue; // Back to the loop, we have a valid previous code
+				} else if (code == endCode) {
+					break;
+				}
+				final int[] prevVals = tbl[prevCode];
+				final int[] prevValsAndK = new int[prevVals.length + 1];
+				System.arraycopy(prevVals, 0, prevValsAndK, 0, prevVals.length);
+				if (code < codes.nextCode) { // Code table contains code
+					pixels = tbl[code]; // Output pixels
+					System.arraycopy(pixels, 0, out, pixelPos, pixels.length);
+					pixelPos += pixels.length;
+					prevValsAndK[prevVals.length] = tbl[code][0]; // K
+				} else {
+					prevValsAndK[prevVals.length] = prevVals[0]; // K
+					System.arraycopy(prevValsAndK, 0, out, pixelPos,
+							prevValsAndK.length);
+					pixelPos += prevValsAndK.length;
+				}
+				currCodeSize = codes.add(prevValsAndK); // Previous indices + K
+			}
+			return out;
+		}
 
 		private final int[] deinterlace(final int[] pixels, final GifFrame fr) {
 			final int w = fr.width, h = fr.height, group2, group3, group4;
@@ -341,48 +391,6 @@ public final class GifDecoder {
 			0x007FFFFF, 0x00FFFFFF, 0x01FFFFFF, 0x03FFFFFF, 0x07FFFFFF,
 			0x0FFFFFFF, 0x1FFFFFFF, 0x3FFFFFFF, 0x7FFFFFFF, 0xFFFFFFFF };
 
-	private final int[] decode(final GifFrame fr, final int[] activeColTbl) {
-		final CodeTable codes = new CodeTable(fr, activeColTbl);
-		final BitReader in = new BitReader(fr.data); // Incoming codes
-		final int clearCode = fr.clearCode, endOfInfoCode = fr.endOfInfoCode;
-		final int numPixels = fr.width * fr.height;
-		final int[] out = new int[numPixels]; // Outgoing pixels
-		final int[][] tbl = codes.tbl; // Code table
-		int outPos = 0; // Next insert position in the output array
-		int currCodeSize = codes.clear(); // Init code table
-		in.read(currCodeSize); // Skip leading clear code
-		int code = in.read(currCodeSize); // Read first code
-		outPos = writeIndices(out, outPos, tbl[code]); // Output 1st code
-		while (outPos < numPixels) {
-			final int prevCode = code;
-			try {
-				code = in.read(currCodeSize); // Get next code in code stream
-			} catch (final ArrayIndexOutOfBoundsException e) {
-				break; // No more codes available
-			}
-			if (code == clearCode) { // After a CLEAR table, there is
-				currCodeSize = codes.clear(); // no previous code, so we need
-				code = in.read(currCodeSize); // to read a new previous code
-				outPos = writeIndices(out, outPos, tbl[code]); // Write code
-				continue; // Now back to the loop, we have a valid previous code
-			} else if (code == endOfInfoCode) {
-				break;
-			}
-			final int[] prevVals = tbl[prevCode];
-			final int[] prevValsAndK = new int[prevVals.length + 1];
-			System.arraycopy(prevVals, 0, prevValsAndK, 0, prevVals.length);
-			if (code < codes.nextCode) { // Code table contains code
-				outPos = writeIndices(out, outPos, tbl[code]);
-				prevValsAndK[prevVals.length] = tbl[code][0]; // K
-			} else {
-				prevValsAndK[prevVals.length] = prevVals[0]; // K
-				outPos = writeIndices(out, outPos, prevValsAndK);
-			}
-			currCodeSize = codes.add(prevValsAndK); // Add previous indices + K
-		}
-		return out;
-	}
-
 	/**
 	 * @param in
 	 *            Raw image data as a byte[] array
@@ -390,8 +398,9 @@ public final class GifDecoder {
 	 * @throws ParseException
 	 *             If the image violates the GIF specification or is truncated.
 	 */
-	public final GifImage read(final byte[] in) throws ParseException {
-		final GifImage img = new GifImage();
+	public static final GifImage read(final byte[] in) throws ParseException {
+		final GifDecoder dec = new GifDecoder();
+		final GifImage img = dec.new GifImage();
 		GifFrame frame = null; // Currently open frame
 		int pos = readHeader(in, img); // Read header, get next byte position
 		pos = readLogicalScreenDescriptor(img, in, pos);
@@ -419,7 +428,7 @@ public final class GifDecoder {
 					break;
 				case 0xF9: // Graphic control extension
 					if (frame == null) {
-						frame = new GifFrame();
+						frame = dec.new GifFrame();
 						img.frames.add(frame);
 					}
 					pos = readGraphicControlExt(frame, in, pos);
@@ -430,7 +439,7 @@ public final class GifDecoder {
 				break;
 			case 0x2C: // Image descriptor
 				if (frame == null) {
-					frame = new GifFrame();
+					frame = dec.new GifFrame();
 					img.frames.add(frame);
 				}
 				pos = readImgDescr(frame, in, pos);
@@ -462,8 +471,8 @@ public final class GifDecoder {
 	 *             If the image violates the GIF specification or is truncated.
 	 * @throws IOException
 	 */
-	public final GifImage read(final InputStream is) throws ParseException,
-			IOException {
+	public static final GifImage read(final InputStream is)
+			throws ParseException, IOException {
 		final int numBytes = is.available();
 		final byte[] data = new byte[numBytes];
 		is.read(data, 0, numBytes);
@@ -479,7 +488,7 @@ public final class GifDecoder {
 	 *            Index of the first byte of the application extension
 	 * @return Index of the first byte after this extension
 	 */
-	private final int readAppExt(final GifImage img, final byte[] in, int i) {
+	static final int readAppExt(final GifImage img, final byte[] in, int i) {
 		img.appId = new String(in, i + 3, 8); // should be "NETSCAPE"
 		img.appAuthCode = new String(in, i + 11, 3); // should be "2.0"
 		i += 14; // Go to sub-block size, it's value should be 3
@@ -505,7 +514,7 @@ public final class GifDecoder {
 	 *            Index of the color table's first byte
 	 * @return Index of the first byte after the color table
 	 */
-	private final int readColTbl(final byte[] in, final int[] colors, int i) {
+	static final int readColTbl(final byte[] in, final int[] colors, int i) {
 		final int numColors = colors.length;
 		for (int c = 0; c < numColors; c++) {
 			final int a = 0xFF; // Alpha 255 (opaque)
@@ -526,7 +535,7 @@ public final class GifDecoder {
 	 *            Index of the extension introducer
 	 * @return Index of the first byte after this block
 	 */
-	private final int readGraphicControlExt(final GifFrame fr, final byte[] in,
+	static final int readGraphicControlExt(final GifFrame fr, final byte[] in,
 			final int i) {
 		fr.disposalMethod = (in[i + 3] & 0b00011100) >>> 2; // Bits 4-2
 		fr.transpColFlag = (in[i + 3] & 1) == 1; // Bit 0
@@ -544,7 +553,7 @@ public final class GifDecoder {
 	 * @throws ParseException
 	 *             If the GIF header/trailer is missing, incomplete or unknown
 	 */
-	private final int readHeader(final byte[] in, final GifImage img)
+	static final int readHeader(final byte[] in, final GifImage img)
 			throws ParseException {
 		if (in.length < 6) { // Check first 6 bytes
 			throw new ParseException("Image is truncated.", 0);
@@ -565,7 +574,7 @@ public final class GifDecoder {
 	 *            Index of the first byte of this block, i.e. the minCodeSize
 	 * @return
 	 */
-	private final int readImgData(final GifFrame fr, final byte[] in, int i) {
+	static final int readImgData(final GifFrame fr, final byte[] in, int i) {
 		final int fileSize = in.length;
 		fr.minCodeSize = in[i++] & 0xFF; // Read code size, go to block size
 		fr.firstCodeSize = fr.minCodeSize + 1; // Add 1 bit for CLEAR and EOI
@@ -596,7 +605,7 @@ public final class GifDecoder {
 		return i;
 	}
 
-	private final int readImgDataSize(final byte[] in, int i) {
+	static final int readImgDataSize(final byte[] in, int i) {
 		final int fileSize = in.length;
 		int imgDataPos = 0;
 		int subBlockSize = in[i] & 0xFF;
@@ -626,7 +635,7 @@ public final class GifDecoder {
 	 *            Index of the image separator, i.e. the first block byte
 	 * @return Index of the first byte after this block
 	 */
-	private final int readImgDescr(final GifFrame fr, final byte[] in, int i) {
+	static final int readImgDescr(final GifFrame fr, final byte[] in, int i) {
 		fr.left = in[++i] & 0xFF | (in[++i] & 0xFF) << 8; // Byte 1-2
 		fr.top = in[++i] & 0xFF | (in[++i] & 0xFF) << 8; // Byte 3-4
 		fr.width = in[++i] & 0xFF | (in[++i] & 0xFF) << 8; // Byte 5-6
@@ -646,7 +655,7 @@ public final class GifDecoder {
 	 *            Start index of this block.
 	 * @return Index of the first byte after this block.
 	 */
-	private final int readLogicalScreenDescriptor(final GifImage img,
+	static final int readLogicalScreenDescriptor(final GifImage img,
 			final byte[] in, final int i) {
 		img.width = in[i] & 0xFF | (in[i + 1] & 0xFF) << 8; // 16 bit, LSB 1st
 		img.height = in[i + 2] & 0xFF | (in[i + 3] & 0xFF) << 8; // 16 bit
@@ -669,7 +678,7 @@ public final class GifDecoder {
 	 *            Index of the extension introducer
 	 * @return Index of the first byte after this block
 	 */
-	private final int readTextExtension(final byte[] in, final int pos) {
+	static final int readTextExtension(final byte[] in, final int pos) {
 		int i = pos + 2; // Skip extension introducer and label
 		int subBlockSize = in[i++] & 0xFF;
 		while (subBlockSize != 0 && i < in.length) {
@@ -677,11 +686,5 @@ public final class GifDecoder {
 			subBlockSize = in[i++] & 0xFF;
 		}
 		return i;
-	}
-
-	private final int writeIndices(final int[] out, final int start,
-			final int[] indices) {
-		System.arraycopy(indices, 0, out, start, indices.length);
-		return start + indices.length;
 	}
 }
