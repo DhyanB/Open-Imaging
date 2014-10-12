@@ -39,7 +39,7 @@ import java.util.List;
  * <p>
  * 
  * <pre>
- * final GifImage gifImage = GifEncoder.read(int[] data);
+ * final GifImage gifImage = GifDecoder.read(int[] data);
  * final int width = gifImage.getWidth();
  * final int height = gifImage.getHeight();
  * final int frameCount = gifImage.getFrameCount();

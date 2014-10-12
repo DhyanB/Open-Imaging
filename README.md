@@ -10,7 +10,7 @@ A decoder capable of processing a GIF data stream to render the graphics contain
 ### Example Usage
 ```java
 void example(final byte[] data) throws Exception {
-	final GifImage gif = GifEncoder.read(data);
+	final GifImage gif = GifDecoder.read(data);
 	final int width = gif.getWidth();
 	final int height = gif.getHeight();
 	final int background = gif.getBackgroundColor();
@@ -27,7 +27,7 @@ You can also read from an input stream, though it will be converted to a byte ar
 
 ```java
 	final FileInputStream data = new FileInputStream(IN_FOLDER + "some.gif");
-	final GifImage gif = GifEncoder.read(data);
+	final GifImage gif = GifDecoder.read(data);
 ```
 
 ### Compatibility
