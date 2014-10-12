@@ -10,8 +10,7 @@ A decoder capable of processing a GIF data stream to render the graphics contain
 ### Example Usage
 ```java
 void example(final byte[] data) throws Exception {
-	final GifDecoder decoder = new GifDecoder();
-	final GifImage gif = decoder.read(data);
+	final GifImage gif = GifEncoder.read(data);
 	final int width = gif.getWidth();
 	final int height = gif.getHeight();
 	final int background = gif.getBackgroundColor();
@@ -19,17 +18,16 @@ void example(final byte[] data) throws Exception {
 	for (int i = 0; i < frameCount; i++) {
 		final BufferedImage img = gif.getFrame(i);
 		final int delay = gif.getDelay(i);
-		ImageIO.write(img, "png", new File(OUTPATH + "frame_" + i + ".png"));
+		ImageIO.write(img, "png", new File(OUT_FOLDER + "frame_" + i + ".png"));
 	}
 }
 ```
 
-You can also read from an input stream, though it will be transformed into a byte array internally:
+You can also read from an input stream, though it will be converted to a byte array internally:
 
 ```java
 	final FileInputStream data = new FileInputStream(IN_FOLDER + "some.gif");
-	final GifDecoder decoder = new GifDecoder();
-	final GifImage gif = decoder.read(data);
+	final GifImage gif = GifEncoder.read(data);
 ```
 
 ### Compatibility
@@ -46,14 +44,14 @@ During development, this decoder has been frequently compared with the one from 
 	RESULTS FOR OPEN IMAGING DECODER
 	Files: 25
 	Repetitions: 100
-	Total time: 147263 ms
-	Time per repetition: 1472 ms
-
+	Total time: 141708 ms
+	Time per repetition: 1417 ms
+	
 	RESULTS FOR KEVIN WEINER DECODER
 	Files: 25
 	Repetitions: 100
-	Runtime: 162479 ms
-	Time per repetition: 1624 ms
+	Runtime: 155105 ms
+	Time per repetition: 1551 ms
 
 However, performance heavily depends on the set of images used for testing (see next paragraph) and the main motivation behind the development of this decoder wasn't speed but rather correctness. So I wouldn't insist in being faster, I just think the decoder delivers decent performance.
 
