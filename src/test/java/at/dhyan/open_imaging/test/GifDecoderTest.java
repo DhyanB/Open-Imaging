@@ -41,6 +41,14 @@ public class GifDecoderTest {
 				new TestImage("hands", 800, 600, 11),
 				new TestImage("prom", 500, 275, 71),
 				new TestImage("cradle", 200, 150, 36),
+				/*
+				 * Frames 0-58 look okay, frame 59 is slightly disturbed. A
+				 * different decoder gets 4 more completely broken frames out of
+				 * it, but even after looking at the bytes in a hex editor I'm
+				 * not sure how much frames it actually contains. There is more
+				 * data, but no more valid extensions or image descriptors.
+				 */
+				new TestImage("science", 307, 265, 60),
 				new TestImage("hand", 400, 400, 49),
 				new TestImage("run", 320, 190, 99),
 				new TestImage("geo1", 500, 500, 72),
@@ -104,7 +112,6 @@ public class GifDecoderTest {
 			final long start = System.nanoTime();
 			for (int n = 0; n < LOOPS; n++) {
 				for (final TestImage testImg : ALL) {
-					// System.out.println(ALL[f].path);
 					final GifImage gifImage = GifDecoder.read(testImg.data);
 					final int frameCount = gifImage.getFrameCount();
 					for (int i = 0; i < frameCount; i++) {
