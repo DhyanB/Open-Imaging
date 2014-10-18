@@ -14,12 +14,12 @@ public class TestImage {
 	public byte[] data;
 	public ByteArrayInputStream stream;
 
-	public TestImage(final String name, final int w, final int h, final int f)
-			throws IOException {
+	public TestImage(final String name, final int width, final int height,
+			final int frames) throws IOException {
 		path = Paths.get(GifDecoderTest.IN_FOLDER, name + ".gif");
-		width = w;
-		height = h;
-		frames = f;
+		this.width = width;
+		this.height = height;
+		this.frames = frames;
 		data = Files.readAllBytes(path);
 		stream = new ByteArrayInputStream(data);
 		stream.reset();
