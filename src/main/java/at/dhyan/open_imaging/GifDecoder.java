@@ -51,7 +51,7 @@ import java.util.List;
  * </p>
  * 
  * @author Dhyan Blum
- * @version 1.06 October 2014
+ * @version 1.07 October 2014
  * 
  */
 public final class GifDecoder {
@@ -89,10 +89,7 @@ public final class GifDecoder {
 		private int nextCodeLimit; // Increase codeSize when nextCode == limit
 
 		public CodeTable() {
-			tbl = new int[4096][];
-			for (int i = 0; i < 256; i++) {
-				tbl[i] = new int[1]; // Preinitialize single element arrays
-			}
+			tbl = new int[4096][1];
 		}
 
 		private final int add(final int[] indices) {
@@ -119,7 +116,7 @@ public final class GifDecoder {
 			initCodeLimit = MASK[initCodeSize]; // 2^initCodeSize - 1
 			initTableSize = fr.endOfInfoCode + 1;
 			nextCode = initTableSize;
-			for (int c = 0; c < numColors; c++) {
+			for (int c = numColors - 1; c >= 0; c--) {
 				tbl[c][0] = activeColTbl[c]; // Translated color
 			} // A gap may follow with no colors assigned if numCols < CLEAR
 			tbl[fr.clearCode] = new int[] { fr.clearCode }; // CLEAR
@@ -160,6 +157,7 @@ public final class GifDecoder {
 		public String header; // Bytes 0-5, GIF87a or GIF89a
 		private int width; // Unsigned 16 Bit, least significant byte first
 		private int height; // Unsigned 16 Bit, least significant byte first
+		private int wh; // width * height
 		public boolean hasGlobColTbl; // 1 Bit
 		public int colorResolution; // 3 Bits
 		public boolean sortFlag; // True if global colors are sorted, 1 Bit
@@ -176,55 +174,56 @@ public final class GifDecoder {
 		private int prevIndex; // Index of the last drawn frame
 		private int prevDisposal; // Disposal of the previous frame
 		private final BitReader in = new BitReader();
-		private final CodeTable codeTable = new CodeTable();
+		private final CodeTable codes = new CodeTable();
+		public int[] pxBuffer;
 
 		private final int[] decode(final GifFrame fr, final int[] activeColTbl) {
-			final CodeTable codes = codeTable;
 			codes.init(fr, activeColTbl);
 			in.init(fr.data); // Incoming codes
 			final int clearCode = fr.clearCode, endCode = fr.endOfInfoCode;
-			final int numPixels = fr.width * fr.height;
-			final int[] out = new int[numPixels]; // Target image pixel array
+			final int[] out = pxBuffer; // Target image pixel array
 			final int[][] tbl = codes.tbl; // Code table
-			int pixelPos = 0; // Next pixel position in the output image array
+			int pxPos = 0; // Next pixel position in the output image array
 			int currCodeSize = codes.clear(); // Init code table
 			in.read(currCodeSize); // Skip leading clear code
 			int code = in.read(currCodeSize); // Read first code
 			int[] pixels = tbl[code]; // Output pixel for first code
-			System.arraycopy(pixels, 0, out, pixelPos, pixels.length);
-			pixelPos += pixels.length;
-			while (pixelPos < numPixels) {
-				final int prevCode = code;
-				try {
+			System.arraycopy(pixels, 0, out, pxPos, pixels.length);
+			pxPos += pixels.length;
+			try {
+				while (true) {
+					final int prevCode = code;
 					code = in.read(currCodeSize); // Get next code in stream
-				} catch (final ArrayIndexOutOfBoundsException e) {
-					break;
+					if (code == clearCode) { // After a CLEAR table, there is
+						currCodeSize = codes.clear(); // No previous code, we
+						code = in.read(currCodeSize); // need to read a new one
+						pixels = tbl[code]; // Output pixels
+						System.arraycopy(pixels, 0, out, pxPos, pixels.length);
+						pxPos += pixels.length;
+						continue; // Back to the loop with a valid previous code
+					} else if (code == endCode) {
+						break;
+					}
+					final int[] prevVals = tbl[prevCode];
+					final int[] prevValsAndK = new int[prevVals.length + 1];
+					System.arraycopy(prevVals, 0, prevValsAndK, 0,
+							prevVals.length);
+					if (code < codes.nextCode) { // Code table contains code
+						pixels = tbl[code]; // Output pixels
+						System.arraycopy(pixels, 0, out, pxPos, pixels.length);
+						pxPos += pixels.length;
+						prevValsAndK[prevVals.length] = tbl[code][0]; // K
+					} else {
+						prevValsAndK[prevVals.length] = prevVals[0]; // K
+						System.arraycopy(prevValsAndK, 0, out, pxPos,
+								prevValsAndK.length);
+						pxPos += prevValsAndK.length;
+					}
+					currCodeSize = codes.add(prevValsAndK); // Previous indices
+															// + K
+
 				}
-				if (code == clearCode) { // After a CLEAR table, there is
-					currCodeSize = codes.clear(); // No previous code, we need
-					code = in.read(currCodeSize); // to read a new previous code
-					pixels = tbl[code]; // Output pixels
-					System.arraycopy(pixels, 0, out, pixelPos, pixels.length);
-					pixelPos += pixels.length;
-					continue; // Back to the loop, we have a valid previous code
-				} else if (code == endCode) {
-					break;
-				}
-				final int[] prevVals = tbl[prevCode];
-				final int[] prevValsAndK = new int[prevVals.length + 1];
-				System.arraycopy(prevVals, 0, prevValsAndK, 0, prevVals.length);
-				if (code < codes.nextCode) { // Code table contains code
-					pixels = tbl[code]; // Output pixels
-					System.arraycopy(pixels, 0, out, pixelPos, pixels.length);
-					pixelPos += pixels.length;
-					prevValsAndK[prevVals.length] = tbl[code][0]; // K
-				} else {
-					prevValsAndK[prevVals.length] = prevVals[0]; // K
-					System.arraycopy(prevValsAndK, 0, out, pixelPos,
-							prevValsAndK.length);
-					pixelPos += prevValsAndK.length;
-				}
-				currCodeSize = codes.add(prevValsAndK); // Previous indices + K
+			} catch (final ArrayIndexOutOfBoundsException e) {
 			}
 			return out;
 		}
@@ -269,12 +268,6 @@ public final class GifDecoder {
 			}
 			// Handle disposal, prepare current BufferedImage for drawing
 			switch (prevDisposal) {
-			case 0: // Next frame draws on current frame
-				setPixels(getPixels(img), prevImg); // Copy current to previous
-				break;
-			case 1: // Next frame draws on current frame
-				setPixels(getPixels(img), prevImg); // Copy current to previous
-				break;
 			case 2: // Next frame draws on background canvas
 				final BufferedImage bgImage = prevImg;
 				final int[] px = getPixels(bgImage);
@@ -282,11 +275,11 @@ public final class GifDecoder {
 				prevImg = img; // Let previous point to current, dispose current
 				img = bgImage; // Let current point to background image
 				break;
-			case 3: // Next frame draws on previous frame
-				setPixels(getPixels(prevImg), img); // Restore previous image
+			case 3: // Next frame draws on previous frame, so restore previous
+				System.arraycopy(getPixels(prevImg), 0, getPixels(img), 0, wh);
 				break;
-			default: // Next frame draws on current frame
-				setPixels(getPixels(img), prevImg); // Copy current to previous
+			default: // Next frame draws on current frame, so backup current
+				System.arraycopy(getPixels(img), 0, getPixels(prevImg), 0, wh);
 				break;
 			}
 			// Get pixels from data stream
@@ -295,20 +288,19 @@ public final class GifDecoder {
 				pixels = deinterlace(pixels, fr); // Rearrange pixel lines
 			}
 			// Draw pixels on top of current image
-			final int w = fr.width, h = fr.height;
-			final BufferedImage layer = new BufferedImage(w, h, img.getType());
-			setPixels(pixels, layer);
+			final int w = fr.width, h = fr.height, numPixels = w * h;
+			final BufferedImage frame = new BufferedImage(w, h, 2); // 2 = ARGB
+			System.arraycopy(pixels, 0, getPixels(frame), 0, numPixels);
 			final Graphics2D g = img.createGraphics();
-			g.drawImage(layer, fr.left, fr.top, null);
+			g.drawImage(frame, fr.left, fr.top, null);
 			g.dispose();
 		}
 
 		/**
-		 * Returns the background color for the first frame in this GIF image.
-		 * If the frame has a local color table, the returned color will be from
-		 * this table. If not, the color will be from the global color table. If
-		 * there is neither a local nor a global color table, 0 will be
-		 * returned.
+		 * Returns the background color of the first frame in this GIF image. If
+		 * the frame has a local color table, the returned color will be from
+		 * that table. If not, the color will be from the global color table.
+		 * Returns 0 if there is neither a local nor a global color table.
 		 * 
 		 * @param index
 		 *            Index of the current frame, 0 to N-1
@@ -325,9 +317,8 @@ public final class GifDecoder {
 		}
 
 		/**
-		 * If not 0, the delay specifies the number of hundredths (1/100) of a
-		 * second to wait before displaying the frame <i>after</i> the current
-		 * frame.
+		 * If not 0, the delay specifies how many hundredths (1/100) of a second
+		 * to wait before displaying the frame <i>after</i> the current frame.
 		 * 
 		 * @param index
 		 *            Index of the current frame, 0 to N-1
@@ -353,9 +344,8 @@ public final class GifDecoder {
 		 */
 		public final BufferedImage getFrame(final int index) {
 			if (img == null || index < prevIndex) { // (Re)Init
-				img = new BufferedImage(width, height,
-						BufferedImage.TYPE_INT_ARGB);
-				prevImg = new BufferedImage(width, height, img.getType());
+				img = new BufferedImage(width, height, 2); // 2 = ARGB
+				prevImg = new BufferedImage(width, height, 2);
 				prevIndex = -1;
 				prevDisposal = 2;
 			}
@@ -392,10 +382,6 @@ public final class GifDecoder {
 		 */
 		public final int getWidth() {
 			return width;
-		}
-
-		private final void setPixels(final int[] px, final BufferedImage dest) {
-			System.arraycopy(px, 0, getPixels(dest), 0, px.length);
 		}
 	}
 
@@ -472,13 +458,10 @@ public final class GifDecoder {
 			case 0x3B: // GIF Trailer
 				return img; // Found trailer, finished reading.
 			default:
-				/*
-				 * Unknown block. The image is corrupted. Strategies: a) Skip
-				 * and wait for a valid block. Experience: It'll get worse. b)
-				 * Throw exception. c) Return gracefully if we are almost done
-				 * processing. This has the advantage of returning the number of
-				 * error-free frames.
-				 */
+				// Unknown block. The image is corrupted. Strategies: a) Skip
+				// and wait for a valid block. Experience: It'll get worse. b)
+				// Throw exception. c) Return gracefully if we are almost done
+				// processing. The frames we have so far should be error-free.
 				final double progress = 1.0 * pos / in.length;
 				if (progress < 0.9) {
 					throw new IOException("Unknown block at: " + pos);
@@ -690,6 +673,8 @@ public final class GifDecoder {
 			final byte[] in, final int i) {
 		img.width = in[i] & 0xFF | (in[i + 1] & 0xFF) << 8; // 16 bit, LSB 1st
 		img.height = in[i + 2] & 0xFF | (in[i + 3] & 0xFF) << 8; // 16 bit
+		img.wh = img.width * img.height;
+		img.pxBuffer = new int[img.wh]; // Output pixel buffer
 		final byte b = in[i + 4]; // Byte 4 is a packed byte
 		img.hasGlobColTbl = (b & 0b10000000) >>> 7 == 1; // Bit 7
 		final int colResPower = ((b & 0b01110000) >>> 4) + 1; // Bits 6-4
