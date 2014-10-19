@@ -59,7 +59,7 @@ public final class GifDecoder {
 		private int bitPos; // Next bit to read
 		private byte[] in; // Data array
 
-		// To avoid costly bounds checks, 'in' needs 3 more 0-bytes at the end
+		// To avoid costly bounds checks, 'in' needs 2 more 0-bytes at the end
 		private final void init(final byte[] in) {
 			this.in = in;
 			bitPos = 0;
@@ -232,9 +232,9 @@ public final class GifDecoder {
 			final int w = fr.width, h = fr.height, group2, group3, group4;
 			final int[] dest = new int[pixels.length];
 			// Interlaced images are divided in 4 groups of pixel lines
-			group2 = (int) Math.ceil(h / 8.0); // Start index of group 2
-			group3 = group2 + (int) Math.ceil((h - 4) / 8.0); // Start index
-			group4 = group3 + (int) Math.ceil((h - 2) / 4.0); // Start index
+			group2 = (h + 7) / 8; // Start index of group 2 = ceil(h/8.0)
+			group3 = group2 + (h + 3) / 8; // Start index = ceil(h-4/8.0)
+			group4 = group3 + (h + 1) / 4; // Start index = ceil(h-2/4.0)
 			// Group 1 contains every 8th line starting from 0
 			for (int y = 0; y < group2; y++) {
 				final int destPos = w * y * 8;
