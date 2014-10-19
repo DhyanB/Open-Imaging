@@ -39,19 +39,19 @@ You can also read from an input stream, though it will be converted to a byte ar
 
 ### Performance
 
-During development, this decoder has been frequently compared with the one from Kevin Weiner, which is well crafted and delivers high performance. I worked hard to deliver similar speed and current testing indicates that the decoder is about 10% faster than Kevin Weiner's:
+During development, this decoder has been frequently compared with the one from Kevin Weiner, which is well crafted and delivers high performance. I worked hard to deliver similar speed and current testing indicates that the decoder is about 15% faster than Kevin Weiner's:
 
 	RESULTS FOR OPEN IMAGING DECODER
-	Files: 25
+	Files: 26
 	Repetitions: 100
-	Total time: 141708 ms
-	Time per repetition: 1417 ms
-	
+	Total time: 142682 ms
+	Time per repetition: 1426 ms
+
 	RESULTS FOR KEVIN WEINER DECODER
-	Files: 25
+	Files: 26
 	Repetitions: 100
-	Runtime: 155105 ms
-	Time per repetition: 1551 ms
+	Runtime: 167689 ms
+	Time per repetition: 1676 ms
 
 However, performance heavily depends on the set of images used for testing (see next paragraph) and the main motivation behind the development of this decoder wasn't speed but rather correctness. So I wouldn't insist in being faster, I just think the decoder delivers decent performance.
 
