@@ -1,23 +1,25 @@
 package at.dhyan.open_imaging;
 
+import static java.lang.System.arraycopy;
+
+import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /*
  * Copyright 2014 Dhyan Blum
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
- *   
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -27,16 +29,17 @@ import java.util.List;
 /**
  * <p>
  * A decoder capable of processing a GIF data stream to render the graphics
- * contained in it. This implementation follows the official <A
- * HREF="http://www.w3.org/Graphics/GIF/spec-gif89a.txt">GIF specification</A>.
+ * contained in it. This implementation follows the official
+ * <A HREF="http://www.w3.org/Graphics/GIF/spec-gif89a.txt">GIF
+ * specification</A>.
  * </p>
- * 
+ *
  * <p>
  * Example usage:
  * </p>
- * 
+ *
  * <p>
- * 
+ *
  * <pre>
  * final GifImage gifImage = GifDecoder.read(int[] data);
  * final int width = gifImage.getWidth();
@@ -47,12 +50,12 @@ import java.util.List;
  * 	final int delay = gif.getDelay(i);
  * }
  * </pre>
- * 
+ *
  * </p>
- * 
+ *
  * @author Dhyan Blum
- * @version 1.07 October 2014
- * 
+ * @version 1.08 July 2016
+ *
  */
 public final class GifDecoder {
 	final class BitReader {
@@ -157,7 +160,7 @@ public final class GifDecoder {
 		public String header; // Bytes 0-5, GIF87a or GIF89a
 		private int width; // Unsigned 16 Bit, least significant byte first
 		private int height; // Unsigned 16 Bit, least significant byte first
-		private int wh; // width * height
+		private int wh; // Image width * image height
 		public boolean hasGlobColTbl; // 1 Bit
 		public int colorResolution; // 3 Bits
 		public boolean sortFlag; // True if global colors are sorted, 1 Bit
@@ -173,8 +176,13 @@ public final class GifDecoder {
 		private BufferedImage prevImg = null; // Last drawn frame
 		private int prevIndex; // Index of the last drawn frame
 		private int prevDisposal; // Disposal of the previous frame
+		private int prevLeft; // Previous position on the canvas from the left
+		private int prevTop; // Previous position on the canvas from the top
+		private int prevWidth; // Width of the previous frame
+		private int prevHeight; // Height of the previous frame
 		private final BitReader in = new BitReader();
 		private final CodeTable codes = new CodeTable();
+		private Graphics2D g;
 		public int[] pxBuffer;
 
 		private final int[] decode(final GifFrame fr, final int[] activeColTbl) {
@@ -188,7 +196,7 @@ public final class GifDecoder {
 			in.read(currCodeSize); // Skip leading clear code
 			int code = in.read(currCodeSize); // Read first code
 			int[] pixels = tbl[code]; // Output pixel for first code
-			System.arraycopy(pixels, 0, out, pxPos, pixels.length);
+			arraycopy(pixels, 0, out, pxPos, pixels.length);
 			pxPos += pixels.length;
 			try {
 				while (true) {
@@ -198,7 +206,7 @@ public final class GifDecoder {
 						currCodeSize = codes.clear(); // No previous code, we
 						code = in.read(currCodeSize); // need to read a new one
 						pixels = tbl[code]; // Output pixels
-						System.arraycopy(pixels, 0, out, pxPos, pixels.length);
+						arraycopy(pixels, 0, out, pxPos, pixels.length);
 						pxPos += pixels.length;
 						continue; // Back to the loop with a valid previous code
 					} else if (code == endCode) {
@@ -206,17 +214,15 @@ public final class GifDecoder {
 					}
 					final int[] prevVals = tbl[prevCode];
 					final int[] prevValsAndK = new int[prevVals.length + 1];
-					System.arraycopy(prevVals, 0, prevValsAndK, 0,
-							prevVals.length);
+					arraycopy(prevVals, 0, prevValsAndK, 0, prevVals.length);
 					if (code < codes.nextCode) { // Code table contains code
 						pixels = tbl[code]; // Output pixels
-						System.arraycopy(pixels, 0, out, pxPos, pixels.length);
+						arraycopy(pixels, 0, out, pxPos, pixels.length);
 						pxPos += pixels.length;
 						prevValsAndK[prevVals.length] = tbl[code][0]; // K
 					} else {
 						prevValsAndK[prevVals.length] = prevVals[0]; // K
-						System.arraycopy(prevValsAndK, 0, out, pxPos,
-								prevValsAndK.length);
+						arraycopy(prevValsAndK, 0, out, pxPos, prevValsAndK.length);
 						pxPos += prevValsAndK.length;
 					}
 					currCodeSize = codes.add(prevValsAndK); // Previous indices
@@ -238,50 +244,58 @@ public final class GifDecoder {
 			// Group 1 contains every 8th line starting from 0
 			for (int y = 0; y < group2; y++) {
 				final int destPos = w * y * 8;
-				System.arraycopy(pixels, w * y, dest, destPos, w);
+				arraycopy(pixels, w * y, dest, destPos, w);
 			} // Group 2 contains every 8th line starting from 4
 			for (int y = group2; y < group3; y++) {
 				final int destY = (y - group2) * 8 + 4, destPos = w * destY;
-				System.arraycopy(pixels, w * y, dest, destPos, w);
+				arraycopy(pixels, w * y, dest, destPos, w);
 			} // Group 3 contains every 4th line starting from 2
 			for (int y = group3; y < group4; y++) {
 				final int destY = (y - group3) * 4 + 2, destPos = w * destY;
-				System.arraycopy(pixels, w * y, dest, destPos, w);
+				arraycopy(pixels, w * y, dest, destPos, w);
 			} // Group 4 contains every 2nd line starting from 1 (biggest group)
 			for (int y = group4; y < h; y++) {
 				final int destY = (y - group4) * 2 + 1, destPos = w * destY;
-				System.arraycopy(pixels, w * y, dest, destPos, w);
+				arraycopy(pixels, w * y, dest, destPos, w);
 			}
 			return dest; // All pixel lines have now been rearranged
 		}
 
 		private final void drawFrame(final GifFrame fr) {
-			int bgCol = 0; // Current background color value
-			final int[] activeColTbl; // Active color table
-			if (fr.hasLocColTbl) {
-				activeColTbl = fr.localColTbl;
-			} else {
-				activeColTbl = globalColTbl;
-				if (!fr.transpColFlag) { // Only use background color if there
-					bgCol = globalColTbl[bgColIndex]; // is no transparency
-				}
-			}
+			// TODO: REMOVE
+			// System.out.println("\tdisp: " + fr.disposalMethod + ", globBg: "
+			// + Integer.toHexString(globalColTbl[bgColIndex]) + ", t/l/w/h: " +
+			// fr.top + "/" + fr.left + "/"
+			// + fr.width + "/" + fr.height + ",\tlocalColTbl: " +
+			// fr.hasLocColTbl);
+
 			// Handle disposal, prepare current BufferedImage for drawing
 			switch (prevDisposal) {
-			case 2: // Next frame draws on background canvas
-				final BufferedImage bgImage = prevImg;
-				final int[] px = getPixels(bgImage);
-				Arrays.fill(px, bgCol); // Set background color of bgImage
-				prevImg = img; // Let previous point to current, dispose current
-				img = bgImage; // Let current point to background image
+			case 2: // Clear area of previous frame
+				// Preserve previous frame
+				final int[] px = getPixels(img);
+				arraycopy(px, 0, getPixels(prevImg), 0, wh);
+
+				// Clear area of previous frame before drawing current frame
+
+				g.clearRect(prevLeft, prevTop, prevWidth, prevHeight);
+
+				// int start = (prevTop - 1) * width + prevLeft;
+				// for (int prevY = 0; prevY < prevHeight; prevY++) {
+				// start += width;
+				// Arrays.fill(px, start, start + prevWidth, 0);
+				// }
+
 				break;
 			case 3: // Next frame draws on previous frame, so restore previous
-				System.arraycopy(getPixels(prevImg), 0, getPixels(img), 0, wh);
+				arraycopy(getPixels(prevImg), 0, getPixels(img), 0, wh);
 				break;
 			default: // Next frame draws on current frame, so backup current
-				System.arraycopy(getPixels(img), 0, getPixels(prevImg), 0, wh);
+				arraycopy(getPixels(img), 0, getPixels(prevImg), 0, wh);
 				break;
 			}
+			// Determine the color table that will be active for this frame
+			final int[] activeColTbl = fr.hasLocColTbl ? fr.localColTbl : globalColTbl;
 			// Get pixels from data stream
 			int[] pixels = decode(fr, activeColTbl);
 			if (fr.interlaceFlag) {
@@ -290,10 +304,15 @@ public final class GifDecoder {
 			// Draw pixels on top of current image
 			final int w = fr.width, h = fr.height, numPixels = w * h;
 			final BufferedImage frame = new BufferedImage(w, h, 2); // 2 = ARGB
-			System.arraycopy(pixels, 0, getPixels(frame), 0, numPixels);
-			final Graphics2D g = img.createGraphics();
+			arraycopy(pixels, 0, getPixels(frame), 0, numPixels);
 			g.drawImage(frame, fr.left, fr.top, null);
-			g.dispose();
+
+			// TODO: REMOVE
+			// Use this during testing to visualize frame boundaries
+			// g.setColor(new Color(0xFFFF0000, true)); // Red for previous
+			// g.drawRect(prevLeft, prevTop, prevWidth - 1, prevHeight - 1);
+			// g.setColor(new Color(0xFF00FF00, true)); // Green for new frame
+			// g.drawRect(fr.left, fr.top, w - 1, h - 1);
 		}
 
 		/**
@@ -301,7 +320,7 @@ public final class GifDecoder {
 		 * the frame has a local color table, the returned color will be from
 		 * that table. If not, the color will be from the global color table.
 		 * Returns 0 if there is neither a local nor a global color table.
-		 * 
+		 *
 		 * @param index
 		 *            Index of the current frame, 0 to N-1
 		 * @return 32 bit ARGB color in the form 0xAARRGGBB
@@ -319,7 +338,7 @@ public final class GifDecoder {
 		/**
 		 * If not 0, the delay specifies how many hundredths (1/100) of a second
 		 * to wait before displaying the frame <i>after</i> the current frame.
-		 * 
+		 *
 		 * @param index
 		 *            Index of the current frame, 0 to N-1
 		 * @return Delay as number of hundredths (1/100) of a second
@@ -345,16 +364,29 @@ public final class GifDecoder {
 		public final BufferedImage getFrame(final int index) {
 			if (img == null || index < prevIndex) { // (Re)Init
 				img = new BufferedImage(width, height, 2); // 2 = ARGB
+				g = img.createGraphics();
+				g.setBackground(new Color(0, true)); // Transparent color
 				prevImg = new BufferedImage(width, height, 2);
 				prevIndex = -1;
-				prevDisposal = 2;
+				prevDisposal = 0;
+				prevLeft = 0;
+				prevTop = 0;
+				prevWidth = width;
+				prevHeight = height;
 			}
 			// Draw current frame on top of previous frames
 			for (int i = prevIndex + 1; i <= index; i++) {
 				final GifFrame fr = frames.get(i);
+				// TODO: REMOVE
+				// System.out.print(i + ":");
+
 				drawFrame(fr);
 				prevIndex = i;
 				prevDisposal = fr.disposalMethod;
+				prevLeft = fr.left;
+				prevTop = fr.top;
+				prevWidth = fr.width;
+				prevHeight = fr.height;
 			}
 			return img;
 		}
@@ -387,13 +419,11 @@ public final class GifDecoder {
 
 	// If used as a bitmask, the index tells how much lower bits remain.
 	// May also be used to compute f(i) = (2^i) - 1.
-	static final int[] MASK = new int[] { 0x00000000, 0x00000001, 0x00000003,
-			0x00000007, 0x0000000F, 0x0000001F, 0x0000003F, 0x0000007F,
-			0x000000FF, 0x000001FF, 0x000003FF, 0x000007FF, 0x00000FFF,
-			0x00001FFF, 0x00003FFF, 0x00007FFF, 0x0000FFFF, 0x0001FFFF,
-			0x0003FFFF, 0x0007FFFF, 0x000FFFFF, 0x001FFFFF, 0x003FFFFF,
-			0x007FFFFF, 0x00FFFFFF, 0x01FFFFFF, 0x03FFFFFF, 0x07FFFFFF,
-			0x0FFFFFFF, 0x1FFFFFFF, 0x3FFFFFFF, 0x7FFFFFFF, 0xFFFFFFFF };
+	static final int[] MASK = new int[] { 0x00000000, 0x00000001, 0x00000003, 0x00000007, 0x0000000F, 0x0000001F,
+			0x0000003F, 0x0000007F, 0x000000FF, 0x000001FF, 0x000003FF, 0x000007FF, 0x00000FFF, 0x00001FFF, 0x00003FFF,
+			0x00007FFF, 0x0000FFFF, 0x0001FFFF, 0x0003FFFF, 0x0007FFFF, 0x000FFFFF, 0x001FFFFF, 0x003FFFFF, 0x007FFFFF,
+			0x00FFFFFF, 0x01FFFFFF, 0x03FFFFFF, 0x07FFFFFF, 0x0FFFFFFF, 0x1FFFFFFF, 0x3FFFFFFF, 0x7FFFFFFF,
+			0xFFFFFFFF };
 
 	/**
 	 * @param in
@@ -547,8 +577,7 @@ public final class GifDecoder {
 	 *            Index of the extension introducer
 	 * @return Index of the first byte after this block
 	 */
-	static final int readGraphicControlExt(final GifFrame fr, final byte[] in,
-			final int i) {
+	static final int readGraphicControlExt(final GifFrame fr, final byte[] in, final int i) {
 		fr.disposalMethod = (in[i + 3] & 0b00011100) >>> 2; // Bits 4-2
 		fr.transpColFlag = (in[i + 3] & 1) == 1; // Bit 0
 		fr.delay = in[i + 4] & 0xFF | (in[i + 5] & 0xFF) << 8; // 16 bit LSB
@@ -565,8 +594,7 @@ public final class GifDecoder {
 	 * @throws IOException
 	 *             If the GIF header/trailer is missing, incomplete or unknown
 	 */
-	static final int readHeader(final byte[] in, final GifImage img)
-			throws IOException {
+	static final int readHeader(final byte[] in, final GifImage img) throws IOException {
 		if (in.length < 6) { // Check first 6 bytes
 			throw new IOException("Image is truncated.");
 		}
@@ -601,14 +629,14 @@ public final class GifDecoder {
 			try { // Next line may throw exception if sub-block size is fake
 				final int nextSubBlockSizePos = i + subBlockSize + 1;
 				final int nextSubBlockSize = in[nextSubBlockSizePos] & 0xFF;
-				System.arraycopy(in, i + 1, imgData, imgDataPos, subBlockSize);
+				arraycopy(in, i + 1, imgData, imgDataPos, subBlockSize);
 				imgDataPos += subBlockSize; // Move output data position
 				i = nextSubBlockSizePos; // Move to next sub-block size
 				subBlockSize = nextSubBlockSize;
 			} catch (final Exception e) {
 				// Sub-block exceeds file end, only use remaining bytes
 				subBlockSize = fileSize - i - 1; // Remaining bytes
-				System.arraycopy(in, i + 1, imgData, imgDataPos, subBlockSize);
+				arraycopy(in, i + 1, imgData, imgDataPos, subBlockSize);
 				imgDataPos += subBlockSize; // Move output data position
 				i += subBlockSize + 1; // Move to next sub-block size
 				break;
@@ -669,8 +697,7 @@ public final class GifDecoder {
 	 *            Start index of this block.
 	 * @return Index of the first byte after this block.
 	 */
-	static final int readLogicalScreenDescriptor(final GifImage img,
-			final byte[] in, final int i) {
+	static final int readLogicalScreenDescriptor(final GifImage img, final byte[] in, final int i) {
 		img.width = in[i] & 0xFF | (in[i + 1] & 0xFF) << 8; // 16 bit, LSB 1st
 		img.height = in[i + 2] & 0xFF | (in[i + 3] & 0xFF) << 8; // 16 bit
 		img.wh = img.width * img.height;
