@@ -7,6 +7,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 public class TestImage {
+	public String name;
 	public Path path;
 	public int width;
 	public int height;
@@ -14,8 +15,8 @@ public class TestImage {
 	public byte[] data;
 	public ByteArrayInputStream stream;
 
-	public TestImage(final String name, final int width, final int height,
-			final int frames) throws IOException {
+	public TestImage(final String name, final int width, final int height, final int frames) throws IOException {
+		this.name = name;
 		path = Paths.get(GifDecoderTest.IN_FOLDER, name + ".gif");
 		this.width = width;
 		this.height = height;
