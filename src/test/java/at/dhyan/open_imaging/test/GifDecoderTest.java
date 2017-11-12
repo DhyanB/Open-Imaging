@@ -21,12 +21,13 @@ public class GifDecoderTest {
 	static final String OUT_FOLDER = "src/test/resources/output-frames/";
 	static final String IN_FOLDER = "src/test/resources/input-images/";
 	static TestImage[] IMAGES;
-	static TestImage SINGLE_IMAGE;
+	static TestImage[] IMAGES_SUBSET;
+	static int WARMUP_LOOPS = 10;
 	static int LOOPS = 10;
 
 	@BeforeClass
 	public static void setUp() throws IOException {
-		IMAGES = new TestImage[26];
+		IMAGES = new TestImage[33];
 		IMAGES[0] = new TestImage("sampletrans", 10, 10, 1);
 		IMAGES[1] = new TestImage("sample", 10, 10, 1);
 		IMAGES[2] = new TestImage("sign", 11, 29, 3);
@@ -60,16 +61,16 @@ public class GifDecoderTest {
 		IMAGES[23] = new TestImage("train", 240, 166, 175);
 		IMAGES[24] = new TestImage("bubble", 395, 256, 255);
 		IMAGES[25] = new TestImage("space", 1157, 663, 28);
-		// IMAGES[26] = new TestImage("eatbook", 240, 240, 13);
-		// IMAGES[27] = new TestImage("dispose_none_1", 100, 100, 4);
-		// IMAGES[28] = new TestImage("dispose_none_2", 100, 100, 5);
-		// IMAGES[29] = new TestImage("dispose_prev", 100, 100, 5);
-		// IMAGES[30] = new TestImage("dispose_background_1", 100, 100, 4);
-		// IMAGES[31] = new TestImage("dispose_background_2", 100, 100, 5);
+		IMAGES[26] = new TestImage("eatbook", 240, 240, 13); // Dispose = 2
+		IMAGES[27] = new TestImage("dispose_none_1", 100, 100, 4);
+		IMAGES[28] = new TestImage("dispose_none_2", 100, 100, 5); // Buggy
+		IMAGES[29] = new TestImage("dispose_prev", 100, 100, 5); // Buggy
+		IMAGES[30] = new TestImage("dispose_background_1", 100, 100, 4);
+		IMAGES[31] = new TestImage("dispose_background_2", 100, 100, 5); // Buggy
+		IMAGES[32] = new TestImage("just-do-it", 59, 60, 42);
 
-		// For single image write test during development
-		SINGLE_IMAGE = IMAGES[16];
-
+		// For testing relevant subsets during development
+		IMAGES_SUBSET = new TestImage[] { IMAGES[7], IMAGES[26], IMAGES[32] };
 	}
 
 	@Test
@@ -90,6 +91,20 @@ public class GifDecoderTest {
 	@Test
 	public void testPerformanceKevinWeinerDecoder() {
 		try {
+			// Warm up
+			for (int n = 0; n < WARMUP_LOOPS; n++) {
+				for (final TestImage testImg : IMAGES) {
+					testImg.stream.reset();
+					final com.fmsware.GifDecoder decoder = new com.fmsware.GifDecoder();
+					decoder.read(testImg.stream);
+					final int frameCount = decoder.getFrameCount();
+					for (int i = 0; i < frameCount; i++) {
+						decoder.getFrame(i);
+					}
+				}
+			}
+
+			// Actual performance test
 			final long start = System.nanoTime();
 			for (int n = 0; n < LOOPS; n++) {
 				for (final TestImage testImg : IMAGES) {
@@ -103,6 +118,8 @@ public class GifDecoderTest {
 				}
 			}
 			final long runtime = (System.nanoTime() - start) / 1000000;
+
+			// Output results
 			final long avg = Math.round(runtime / LOOPS);
 			System.out.println("RESULTS FOR KEVIN WEINER DECODER");
 			System.out.println("Files: " + IMAGES.length);
@@ -120,7 +137,7 @@ public class GifDecoderTest {
 	public void testPerformanceOpenImagingDecoder() throws Exception {
 		try {
 			// Warm up
-			for (int n = 0; n < 10; n++) {
+			for (int n = 0; n < WARMUP_LOOPS; n++) {
 				for (final TestImage testImg : IMAGES) {
 					final GifImage gifImage = GifDecoder.read(testImg.data);
 					final int frameCount = gifImage.getFrameCount();
@@ -158,18 +175,50 @@ public class GifDecoderTest {
 	}
 
 	@Test
-	public void testWriteFramesAllImages() throws Exception {
+	public void testWriteFramesAllImagesKevinWeinerDecoder() throws Exception {
 		for (final TestImage testImg : IMAGES) {
-			writeGifImage(testImg);
+			writeGifImageKevinWeinerDecoder(testImg);
 		}
 	}
 
 	@Test
-	public void testWriteFramesSingleImage() throws Exception {
-		writeGifImage(SINGLE_IMAGE);
+	public void testWriteFramesAllImagesOpenImagingDecoder() throws Exception {
+		for (final TestImage testImg : IMAGES) {
+			writeGifImageOpenImagingDecoder(testImg);
+		}
 	}
 
-	private void writeGifImage(final TestImage testImg) {
+	@Test
+	public void testWriteFramesSubsetImageKevinWeinerDecoder() throws Exception {
+		for (final TestImage testImg : IMAGES_SUBSET) {
+			writeGifImageKevinWeinerDecoder(testImg);
+		}
+	}
+
+	@Test
+	public void testWriteFramesSubsetImageOpenImagingDecoder() throws Exception {
+		for (final TestImage testImg : IMAGES_SUBSET) {
+			writeGifImageOpenImagingDecoder(testImg);
+		}
+	}
+
+	private void writeGifImageKevinWeinerDecoder(final TestImage testImg) {
+		try {
+			testImg.stream.reset();
+			final com.fmsware.GifDecoder decoder = new com.fmsware.GifDecoder();
+			decoder.read(testImg.stream);
+			final int frameCount = decoder.getFrameCount();
+			for (int i = 0; i < frameCount; i++) {
+				final BufferedImage img = decoder.getFrame(i);
+				ImageIO.write(img, "png", new File(OUT_FOLDER + testImg.name + "_" + i + ".png"));
+			}
+		} catch (final Exception e) {
+			e.printStackTrace();
+			assertEquals(true, false);
+		}
+	}
+
+	private void writeGifImageOpenImagingDecoder(final TestImage testImg) {
 		try {
 			final GifImage gif = GifDecoder.read(testImg.data);
 			final int frameCount = gif.getFrameCount();
