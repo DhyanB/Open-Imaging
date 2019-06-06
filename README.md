@@ -67,8 +67,8 @@ The current testing set (see `/src/test/resources/input-images/`) consists of 26
 
 <b>Background color:</b> If a GIF frame requires the next frame to be drawn on the background, a decoder would have to clear the canvas and restore the background color that is specified in the GIF's logical screen descriptor. Many GIFs that look like they should actually have a transparent background would then have an opaque background. Therefore this decoder only sets the canvas to the background color, if the next frame has no transparent color defined. Otherwise, a transparent background will be used to draw upon. Testing indicates that this approach works fine. However, you can still ask the decoder for the background color of the first frame and use it to set the background of buffered images on your own.
 
-### Support Open Imaging
+### Additional resources
 
-If you feel like this project deserves a donation, checkout my Pledgie button :-)
-
-<a href='https://pledgie.com/campaigns/26861'><img alt='Click here to lend your support to: GIF Image Decoder and make a donation at pledgie.com !' src='https://pledgie.com/campaigns/26861.png?skin_name=chrome' border='0' ></a>
+- https://www.w3.org/Graphics/GIF/spec-gif89a.txt
+- http://www.theimage.com/animation/pages/disposal.html
+- https://docstore.mik.ua/orelly/web2/wdesign/ch23_05.htm#wdnut2-CHP-23-FIG-1
