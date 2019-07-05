@@ -11,23 +11,12 @@
 	</properties>
 
 	<dependencies>
-
 		<!-- Use SLF4J with LOGBACK-CLASSIC as underlying logging framework. See 
 			http://www.slf4j.org/manual.html for why this is so awesome. -->
 		<dependency>
 			<groupId>org.slf4j</groupId>
 			<artifactId>slf4j-api</artifactId>
 			<version>1.7.7</version>
-		</dependency>
-		<dependency>
-			<groupId>ch.qos.logback</groupId>
-			<artifactId>logback-core</artifactId>
-			<version>1.1.2</version>
-		</dependency>
-		<dependency>
-			<groupId>ch.qos.logback</groupId>
-			<artifactId>logback-classic</artifactId>
-			<version>1.1.2</version>
 		</dependency>
 		<!-- TESTING -->
 		<dependency>
@@ -36,6 +25,31 @@
 			<version>4.11</version>
 			<scope>test</scope>
 		</dependency>
-
 	</dependencies>
+	
+	<build>
+        <finalName>Open-Imaging</finalName>
+        <sourceDirectory>src/main/java</sourceDirectory>
+        <resources>
+            <resource>
+                <targetPath>.</targetPath>
+                <filtering>true</filtering>
+                <directory>src/main/resources/</directory>
+                <includes>
+                    <include>*</include>
+                </includes>
+            </resource>
+        </resources>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.5.1</version>
+                <configuration>
+                    <source>1.8</source>
+                    <target>1.8</target>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
 </project>
