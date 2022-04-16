@@ -37,7 +37,7 @@ public class GifDecoderTest {
 		try {
 			for (String fileName : IMAGES.keySet()) {
 				TestImage testImg = IMAGES.get(fileName);
-				final GifImage gifImage = GifDecoder.read(testImg.data);
+				final GifImage gifImage = GifDecoder.read(testImg.getData());
 				assertEquals(testImg.name + ".gif, width", testImg.width, gifImage.getWidth());
 				assertEquals(testImg.name + ".gif, height", testImg.height, gifImage.getHeight());
 				assertEquals(testImg.name + ".gif, frames", testImg.frames, gifImage.getFrameCount());
@@ -55,9 +55,9 @@ public class GifDecoderTest {
 			for (int n = 0; n < WARMUP_LOOPS; n++) {
 				for (String fileName : IMAGES.keySet()) {
 					TestImage testImg = IMAGES.get(fileName);
-					testImg.stream.reset();
+					testImg.getStream().reset();
 					final com.fmsware.GifDecoder decoder = new com.fmsware.GifDecoder();
-					decoder.read(testImg.stream);
+					decoder.read(testImg.getStream());
 					final int frameCount = decoder.getFrameCount();
 					for (int i = 0; i < frameCount; i++) {
 						decoder.getFrame(i);
@@ -70,9 +70,9 @@ public class GifDecoderTest {
 			for (int n = 0; n < LOOPS; n++) {
 				for (String fileName : IMAGES.keySet()) {
 					TestImage testImg = IMAGES.get(fileName);
-					testImg.stream.reset();
+					testImg.getStream().reset();
 					final com.fmsware.GifDecoder decoder = new com.fmsware.GifDecoder();
-					decoder.read(testImg.stream);
+					decoder.read(testImg.getStream());
 					final int frameCount = decoder.getFrameCount();
 					for (int i = 0; i < frameCount; i++) {
 						decoder.getFrame(i);
@@ -102,7 +102,7 @@ public class GifDecoderTest {
 			for (int n = 0; n < WARMUP_LOOPS; n++) {
 				for (String fileName : IMAGES.keySet()) {
 					TestImage testImg = IMAGES.get(fileName);
-					final GifImage gifImage = GifDecoder.read(testImg.data);
+					final GifImage gifImage = GifDecoder.read(testImg.getData());
 					final int frameCount = gifImage.getFrameCount();
 					for (int i = 0; i < frameCount; i++) {
 						gifImage.getFrame(i);
@@ -115,7 +115,7 @@ public class GifDecoderTest {
 			for (int n = 0; n < LOOPS; n++) {
 				for (String fileName : IMAGES.keySet()) {
 					TestImage testImg = IMAGES.get(fileName);
-					final GifImage gifImage = GifDecoder.read(testImg.data);
+					final GifImage gifImage = GifDecoder.read(testImg.getData());
 					final int frameCount = gifImage.getFrameCount();
 					for (int i = 0; i < frameCount; i++) {
 						gifImage.getFrame(i);
@@ -172,9 +172,9 @@ public class GifDecoderTest {
 
 	private void writeGifImageKevinWeinerDecoder(final TestImage testImg) {
 		try {
-			testImg.stream.reset();
+			testImg.getStream().reset();
 			final com.fmsware.GifDecoder decoder = new com.fmsware.GifDecoder();
-			decoder.read(testImg.stream);
+			decoder.read(testImg.getStream());
 			final int frameCount = decoder.getFrameCount();
 			for (int i = 0; i < frameCount; i++) {
 				final BufferedImage img = decoder.getFrame(i);
@@ -188,7 +188,7 @@ public class GifDecoderTest {
 
 	private void writeGifImageOpenImagingDecoder(final TestImage testImg) {
 		try {
-			final GifImage gif = GifDecoder.read(testImg.data);
+			final GifImage gif = GifDecoder.read(testImg.getData());
 			final int frameCount = gif.getFrameCount();
 			for (int i = 0; i < frameCount; i++) {
 				final BufferedImage img = gif.getFrame(i);
