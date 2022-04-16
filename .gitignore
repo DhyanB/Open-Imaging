@@ -1,3 +1,11 @@
-/target
-/.settings
+# Ignore Gradle project-specific cache directory
+.gradle
+
+# Ignore IntelliJ project directory
+.idea
+
+# Ignore Gradle build output directory
+build
+
+# Ignore thumbnails of input images
 /src/test/resources/input-images/Thumbs.db

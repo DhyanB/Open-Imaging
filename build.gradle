@@ -1,0 +1,17 @@
+plugins {
+    id 'java'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'org.slf4j:slf4j-api:1.7.7'
+    testImplementation 'junit:junit:4.11'
+}
+
+group = 'at.dhyan'
+version = '1'
+description = 'Open Imaging'
+java.sourceCompatibility = JavaVersion.VERSION_1_8
