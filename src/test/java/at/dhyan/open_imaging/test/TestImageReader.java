@@ -1,6 +1,8 @@
 package at.dhyan.open_imaging.test;
 
+import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class TestImageReader {
@@ -50,18 +52,20 @@ public class TestImageReader {
     }
 
     private static void put(String fileName, int width, int height, int frames) {
-        images.put(fileName, new TestImage(fileName, width, height, frames));
+        try {
+            images.put(fileName, new TestImage(fileName, width, height, frames));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     public static Map<String, TestImage> getAllTestImages() {
         return images;
     }
 
-    public static Map<String, TestImage> getSubsetOfTestImages() {
+    public static Map<String, TestImage> getSubsetOfTestImages(List<String> fileNames) {
         Map<String, TestImage> subset = new HashMap<>();
-        subset.put("dance", images.get("dance"));
-        subset.put("eat_book", images.get("eat_book"));
-        subset.put("just_do_it", images.get("just_do_it"));
+        fileNames.forEach(fileName -> subset.put(fileName, images.get(fileName)));
         return subset;
     }
 }
