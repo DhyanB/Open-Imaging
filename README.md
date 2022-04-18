@@ -42,6 +42,7 @@ You can also read from an input stream, though it will be converted to a byte ar
   <a href="http://www.fmsware.com/stuff/gif.html">Kevin Weiner's decoder</a> will either throw the same exception or
   render the frames of these images incorrectly. This decoder does not suffer from this bug.
 * Requires Java 8.
+* Should support Java 11 and Java 17 (untested).
 
 ### Performance
 
