@@ -15,3 +15,11 @@ group = 'at.dhyan'
 version = '1'
 description = 'Open Imaging'
 java.sourceCompatibility = JavaVersion.VERSION_1_8
+
+test {
+    testLogging {
+        outputs.upToDateWhen { false } // Always prints stdout
+        showStandardStreams = true
+    }
+    systemProperties(System.getProperties())
+}
