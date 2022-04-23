@@ -8,22 +8,16 @@ import java.awt.image.BufferedImage;
 import java.io.IOException;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
 
 public class GifDecoderOpenImagingTest extends GifDecoderTest {
 
     @Test
-    public void testForCorrectMetadata() {
-        try {
-            for (TestImage img : IMAGES.values()) {
-                final GifImage gifImage = GifDecoder.read(img.data);
-                assertEquals(img.name + ".gif, width", img.width, gifImage.getWidth());
-                assertEquals(img.name + ".gif, height", img.height, gifImage.getHeight());
-                assertEquals(img.name + ".gif, frames", img.frames, gifImage.getFrameCount());
-            }
-        } catch (final Exception e) {
-            e.printStackTrace();
-            fail();
+    public void testForCorrectMetadata() throws IOException {
+        for (TestImage img : IMAGES.values()) {
+            final GifImage gifImage = GifDecoder.read(img.data);
+            assertEquals(img.name + ".gif, width", img.width, gifImage.getWidth());
+            assertEquals(img.name + ".gif, height", img.height, gifImage.getHeight());
+            assertEquals(img.name + ".gif, frames", img.frames, gifImage.getFrameCount());
         }
     }
 
