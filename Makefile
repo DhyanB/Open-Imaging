@@ -30,7 +30,7 @@ cb:
 	$(GRADLE_CMD) clean build -x test
 
 cbt:
-	$(GRADLE_CMD) clean build --tests GifDecoderOpenImagingTest
+	$(GRADLE_CMD) clean build test --tests GifDecoderOpenImagingTest
 
 w ?= 1 # Defaults to 1
 r ?= 1 # Defaults to 1
