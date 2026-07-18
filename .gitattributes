@@ -1,2 +1,4 @@
-* text eol=lf
+* text=auto eol=lf
 *.bat text eol=crlf
+*.gif binary
+*.jar binary
