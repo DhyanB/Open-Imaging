@@ -13,12 +13,34 @@ dependencies {
 group = 'at.dhyan'
 version = '1'
 description = 'Open Imaging'
-java.sourceCompatibility = JavaVersion.VERSION_1_8
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.release = 8
+}
 
 test {
+    filter {
+        excludeTestsMatching '*.*writeFrames*'
+    }
     testLogging {
         outputs.upToDateWhen { false } // Always prints stdout
         showStandardStreams = true
     }
     systemProperties(System.getProperties())
+}
+
+tasks.register('exportFrames', Test) {
+    description = 'Decode test GIFs and write their frames to build/output-frames.'
+    group = 'verification'
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+    filter {
+        includeTestsMatching '*.*writeFrames*'
+    }
 }

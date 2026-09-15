@@ -3,7 +3,6 @@ package at.dhyan.open_imaging.test;
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -11,7 +10,7 @@ import java.nio.file.Paths;
 
 public class TestImage {
     static final String IN_FOLDER = "src/test/resources/input-images/";
-    static final String OUT_FOLDER = "src/test/resources/output-frames/";
+    static final Path OUT_FOLDER = Paths.get("build", "output-frames");
 
     public final String name;
     public final Path path;
@@ -33,8 +32,9 @@ public class TestImage {
     }
 
     public void writeFramesToDisk(BufferedImage[] frames) throws IOException {
+        Files.createDirectories(OUT_FOLDER);
         for (int i = 0; i < frames.length; i++) {
-            ImageIO.write(frames[i], "png", new File(OUT_FOLDER + name + "_" + i + ".png"));
+            ImageIO.write(frames[i], "png", OUT_FOLDER.resolve(name + "_" + i + ".png").toFile());
         }
     }
 }
