@@ -35,9 +35,9 @@ cbt:
 w ?= 1 # Defaults to 1
 r ?= 1 # Defaults to 1
 bench:
-	$(GRADLE_CMD) test --tests GifDecoderOpenImagingTest.benchmark -Dwarmups=$(w) -Druns=$(r)
+	$(GRADLE_CMD) benchmark --tests GifDecoderOpenImagingTest.benchmark -Dwarmups=$(w) -Druns=$(r)
 
 w ?= 1 # Defaults to 1
 r ?= 1 # Defaults to 1
 bench-kw:
-	$(GRADLE_CMD) test --tests GifDecoderKevinWeinerTest.benchmark -Dwarmups=$(w) -Druns=$(r)
+	$(GRADLE_CMD) benchmark --tests GifDecoderKevinWeinerTest.benchmark -Dwarmups=$(w) -Druns=$(r)

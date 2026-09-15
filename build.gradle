@@ -26,6 +26,7 @@ tasks.withType(JavaCompile).configureEach {
 
 test {
     filter {
+        excludeTestsMatching '*.*benchmark'
         excludeTestsMatching '*.*writeFrames*'
     }
     testLogging {
@@ -43,4 +44,19 @@ tasks.register('exportFrames', Test) {
     filter {
         includeTestsMatching '*.*writeFrames*'
     }
+}
+
+tasks.register('benchmark', Test) {
+    description = 'Run GIF decoder benchmarks.'
+    group = 'verification'
+    testClassesDirs = sourceSets.test.output.classesDirs
+    classpath = sourceSets.test.runtimeClasspath
+    filter {
+        includeTestsMatching '*.*benchmark'
+    }
+    testLogging {
+        outputs.upToDateWhen { false }
+        showStandardStreams = true
+    }
+    systemProperties(System.getProperties())
 }
