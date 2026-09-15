@@ -72,3 +72,13 @@ tasks.register('benchmark', Test) {
     }
     systemProperties(System.getProperties())
 }
+
+tasks.register('generateFrameHashes', JavaExec) {
+    description = 'Generate candidate GIF frame hashes in build/frame-hashes.sha256.'
+    group = 'verification'
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'at.dhyan.open_imaging.test.FrameHashGenerator'
+    final output = layout.buildDirectory.file('frame-hashes.sha256')
+    args(output.get().asFile.absolutePath)
+    outputs.file(output)
+}
