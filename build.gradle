@@ -7,7 +7,8 @@ repositories {
 }
 
 dependencies {
-    testImplementation 'junit:junit:4.13.2'
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.14.3'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher:1.14.3'
 }
 
 group = 'at.dhyan'
@@ -22,6 +23,10 @@ java {
 
 tasks.withType(JavaCompile).configureEach {
     options.release = 8
+}
+
+tasks.withType(Test).configureEach {
+    useJUnitPlatform()
 }
 
 def testJavaVersion = providers.gradleProperty('testJavaVersion')

@@ -2,12 +2,12 @@ package at.dhyan.open_imaging.test;
 
 import at.dhyan.open_imaging.GifDecoder;
 import at.dhyan.open_imaging.GifDecoder.GifImage;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class GifDecoderOpenImagingTest extends GifDecoderTest {
 
@@ -15,9 +15,9 @@ public class GifDecoderOpenImagingTest extends GifDecoderTest {
     public void testForCorrectMetadata() throws IOException {
         for (TestImage img : IMAGES.values()) {
             final GifImage gifImage = GifDecoder.read(img.data);
-            assertEquals(img.name + ".gif, width", img.width, gifImage.getWidth());
-            assertEquals(img.name + ".gif, height", img.height, gifImage.getHeight());
-            assertEquals(img.name + ".gif, frames", img.frames, gifImage.getFrameCount());
+            assertEquals(img.width, gifImage.getWidth(), img.name + ".gif, width");
+            assertEquals(img.height, gifImage.getHeight(), img.name + ".gif, height");
+            assertEquals(img.frames, gifImage.getFrameCount(), img.name + ".gif, frames");
         }
     }
 
