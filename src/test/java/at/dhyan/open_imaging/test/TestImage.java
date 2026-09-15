@@ -37,4 +37,9 @@ public class TestImage {
             ImageIO.write(frames[i], "png", OUT_FOLDER.resolve(name + "_" + i + ".png").toFile());
         }
     }
+
+    @Override
+    public String toString() {
+        return name + ".gif";
+    }
 }

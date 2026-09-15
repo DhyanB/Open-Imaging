@@ -66,6 +66,9 @@ delivers high performance. Recent results indicate that both decoders perform on
 However, performance heavily depends on the set of images used for testing and the main motivation
 behind this decoder was correctness rather than speed.
 
+Kevin Weiner's decoder in `src/test/java/com/fmsware/` is third-party comparison code used only by tests and
+benchmarks; it is not part of the Open Imaging library.
+
 Feel free to run your own tests (see next section), any feedback is highly appreciated.
 
 ### Running the tests and benchmarks

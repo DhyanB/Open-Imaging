@@ -1,3 +1,8 @@
+/*
+ * Third-party, test-only comparison decoder by Kevin Weiner of FM Software.
+ * This class is not part of the Open Imaging library; preserve the original
+ * notice below when modifying this file.
+ */
 package com.fmsware;
 import java.net.*;
 import java.io.*;
