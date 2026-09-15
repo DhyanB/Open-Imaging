@@ -36,7 +36,7 @@ such as the `FileInputStream` in this example:
 ### Compatibility
 
 * Support for GIF87a, GIF89a, animation, transparency and interlacing.
-* Independent of third party libraries. Just download `GifDecoder.java` and the `LICENSE` file.
+* Independent of third-party libraries. Just download `GifDecoder.java` and the `LICENSE` file.
 * Some GIF images cause an 
   <a href="http://stackoverflow.com/questions/22259714/arrayindexoutofboundsexception-4096-while-reading-gif-file">ArrayIndexOutOfBoundsException: 4096</a>
   when using Java's official `ImageIO.read` method or the decoder used in Apache Imaging.
@@ -69,7 +69,7 @@ behind this decoder was correctness rather than speed.
 Kevin Weiner's decoder in `src/test/java/com/fmsware/` is third-party comparison code used only by tests and
 benchmarks; it is not part of the Open Imaging library.
 
-Feel free to run your own tests (see next section), any feedback is highly appreciated.
+Feel free to run your own tests (see the next section). Any feedback is highly appreciated.
 
 ### Running the tests and benchmarks
 
@@ -100,10 +100,10 @@ The test data (see `/src/test/resources/input-images/`) consists of more than 30
 - Around 1.400 individual frames (~30 MB)
 - Different image dimensions
 - Animated GIFs
-- Static GIfs
+- Static GIFs
 - GIFs with transparent backgrounds
 - GIFs that have optimized frames with smaller dimensions than the base canvas
-- GIFs with a high frame-count (255 frames in `bubble.gif`)
+- GIFs with a high frame count (255 frames in `bubble.gif`)
 - GIFs that use interlacing (e.g. `hand.gif`)
 - GIFs that cause the mentioned `ArrayOutOfBoundsException` in various other decoders
 - `fish.gif`, which has no trailer byte

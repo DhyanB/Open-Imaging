@@ -42,13 +42,13 @@ import static java.lang.System.arraycopy;
  * <p>
  *
  * <pre>
- * final GifImage gifImage = GifDecoder.read(int[] data);
+ * final GifImage gifImage = GifDecoder.read(byte[] data);
  * final int width = gifImage.getWidth();
  * final int height = gifImage.getHeight();
  * final int frameCount = gifImage.getFrameCount();
  * for (int i = 0; i < frameCount; i++) {
  * 	final BufferedImage image = gifImage.getFrame(i);
- * 	final int delay = gif.getDelay(i);
+ * 	final int delay = gifImage.getDelay(i);
  * }
  * </pre>
  *
@@ -98,7 +98,7 @@ public final class GifDecoder {
         private int codeSize; // Current code size, maximum is 12 bits
         private int nextCode; // Next available code for a new entry
         private int nextCodeLimit; // Increase codeSize when nextCode == limit
-        private BitReader bitReader; // Notify when code sizes increases
+        private BitReader bitReader; // Notify when code size increases
 
         public CodeTable() {
             table = new int[4096][1];
@@ -294,7 +294,7 @@ public final class GifDecoder {
             int[] prevPx = new int[wh];
             arraycopy(((DataBufferInt) img.getRaster().getDataBuffer()).getData(), 0, prevPx, 0, wh);
 
-            // Create another copy for the end user to not expose internal state
+            // Create another copy so as not to expose internal state to the end user
             fr.img = new BufferedImage(w, h, 2); // 2 = ARGB
             arraycopy(prevPx, 0, ((DataBufferInt) fr.img.getRaster().getDataBuffer()).getData(), 0, wh);
 
@@ -490,7 +490,7 @@ public final class GifDecoder {
     static int readAppExt(final GifImage img, final byte[] in, int i) {
         img.appId = new String(in, i + 3, 8, StandardCharsets.US_ASCII); // should be "NETSCAPE"
         img.appAuthCode = new String(in, i + 11, 3, StandardCharsets.US_ASCII); // should be "2.0"
-        i += 14; // Go to sub-block size, it's value should be 3
+        i += 14; // Go to sub-block size; its value should be 3
         final int subBlockSize = in[i] & 0xFF;
         // The only app extension widely used is NETSCAPE, it's got 3 data bytes
         if (subBlockSize == 3) {
@@ -554,7 +554,7 @@ public final class GifDecoder {
     }
 
     /**
-     * @param fr The GIF frame to whom this image descriptor belongs
+     * @param fr The GIF frame to which this image descriptor belongs
      * @param in Raw data
      * @param i  Index of the first byte of this block, i.e. the minCodeSize
      * @return Byte index
@@ -630,7 +630,7 @@ public final class GifDecoder {
         fr.interlaceFlag = (b & 0b01000000) >>> 6 == 1; // Bit 6
         fr.sortFlag = (b & 0b00100000) >>> 5 == 1; // Bit 5
         final int colTblSizePower = (b & 7) + 1; // Bits 2-0
-        fr.sizeOfLocColTbl = 1 << colTblSizePower; // 2^(N+1), As per the spec
+        fr.sizeOfLocColTbl = 1 << colTblSizePower; // 2^(N+1), per the specification
         return ++i;
     }
 
@@ -646,7 +646,7 @@ public final class GifDecoder {
         final byte b = in[i + 4]; // Byte 4 is a packed byte
         img.hasGlobColTbl = (b & 0b10000000) >>> 7 == 1; // Bit 7
         final int colResPower = ((b & 0b01110000) >>> 4) + 1; // Bits 6-4
-        img.colorResolution = 1 << colResPower; // 2^(N+1), As per the spec
+        img.colorResolution = 1 << colResPower; // 2^(N+1), per the specification
         img.sortFlag = (b & 0b00001000) >>> 3 == 1; // Bit 3
         final int globColTblSizePower = (b & 7) + 1; // Bits 0-2
         img.sizeOfGlobColTbl = 1 << globColTblSizePower; // 2^(N+1), see spec
