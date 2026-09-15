@@ -5,6 +5,7 @@ import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -487,8 +488,8 @@ public final class GifDecoder {
      * @return Index of the first byte after this extension
      */
     static int readAppExt(final GifImage img, final byte[] in, int i) {
-        img.appId = new String(in, i + 3, 8); // should be "NETSCAPE"
-        img.appAuthCode = new String(in, i + 11, 3); // should be "2.0"
+        img.appId = new String(in, i + 3, 8, StandardCharsets.US_ASCII); // should be "NETSCAPE"
+        img.appAuthCode = new String(in, i + 11, 3, StandardCharsets.US_ASCII); // should be "2.0"
         i += 14; // Go to sub-block size, it's value should be 3
         final int subBlockSize = in[i] & 0xFF;
         // The only app extension widely used is NETSCAPE, it's got 3 data bytes
@@ -545,7 +546,7 @@ public final class GifDecoder {
         if (in.length < 6) { // Check first 6 bytes
             throw new IOException("Image is truncated.");
         }
-        img.header = new String(in, 0, 6);
+        img.header = new String(in, 0, 6, StandardCharsets.US_ASCII);
         if (!img.header.equals("GIF87a") && !img.header.equals("GIF89a")) {
             throw new IOException("Invalid GIF header.");
         }
