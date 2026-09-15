@@ -24,7 +24,14 @@ tasks.withType(JavaCompile).configureEach {
     options.release = 8
 }
 
+def testJavaVersion = providers.gradleProperty('testJavaVersion')
+        .map { JavaLanguageVersion.of(it as Integer) }
+        .orElse(JavaLanguageVersion.of(17))
+
 test {
+    javaLauncher = javaToolchains.launcherFor {
+        languageVersion.set(testJavaVersion)
+    }
     filter {
         excludeTestsMatching '*.*benchmark'
         excludeTestsMatching '*.*writeFrames*'

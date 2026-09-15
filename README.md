@@ -42,8 +42,9 @@ such as the `FileInputStream` in this example:
   when using Java's official `ImageIO.read` method or the decoder used in Apache Imaging.
   <a href="http://www.fmsware.com/stuff/gif.html">Kevin Weiner's decoder</a> will either throw the same exception or
   render the frames of these images incorrectly. This decoder does not suffer from this bug.
-* Requires Java 8.
-* Tested with Java 17.
+* Library runtime: Java 8 or newer.
+* Build: JDK 17 or newer.
+* GitHub Actions runs the unit tests on Java 8, Java 11, and Java 17.
 
 ### Performance
 

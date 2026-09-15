@@ -8,6 +8,9 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        test-java: ['8', '11', '17']
 
     steps:
       - uses: actions/checkout@v6
@@ -15,5 +18,11 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
+      - name: Remember Gradle JDK
+        run: echo "GRADLE_JAVA_HOME=$JAVA_HOME" >> "$GITHUB_ENV"
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.test-java }}
       - name: Build and test
-        run: ./gradlew build
+        run: ./gradlew build -PtestJavaVersion=${{ matrix.test-java }} -Dorg.gradle.java.home="$GRADLE_JAVA_HOME" -Dorg.gradle.java.installations.paths="$JAVA_HOME"
