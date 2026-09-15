@@ -274,8 +274,8 @@ public final class GifDecoder {
             if (fr.interlaceFlag) {
                 pixels = deinterlace(pixels, fr); // Rearrange pixel lines
             }
-            // Create image of type 2=ARGB for frame area
-            final BufferedImage frame = new BufferedImage(fr.w, fr.h, 2);
+            // Create ARGB image for frame area
+            final BufferedImage frame = new BufferedImage(fr.w, fr.h, BufferedImage.TYPE_INT_ARGB);
             arraycopy(pixels, 0, ((DataBufferInt) frame.getRaster().getDataBuffer()).getData(), 0, fr.wh);
             // Draw frame area on top of working image
             g.drawImage(frame, fr.x, fr.y, null);
@@ -295,7 +295,7 @@ public final class GifDecoder {
             arraycopy(((DataBufferInt) img.getRaster().getDataBuffer()).getData(), 0, prevPx, 0, wh);
 
             // Create another copy so as not to expose internal state to the end user
-            fr.img = new BufferedImage(w, h, 2); // 2 = ARGB
+            fr.img = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
             arraycopy(prevPx, 0, ((DataBufferInt) fr.img.getRaster().getDataBuffer()).getData(), 0, wh);
 
             // Handle disposal of current frame
@@ -350,7 +350,7 @@ public final class GifDecoder {
          */
         public BufferedImage getFrame(final int index) {
             if (img == null) { // Init
-                img = new BufferedImage(w, h, 2); // 2 = ARGB
+                img = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB);
                 g = img.createGraphics();
                 g.setBackground(new Color(0, true)); // Transparent color
             }
