@@ -4,13 +4,13 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.awt.image.BufferedImage;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
 
 import static at.dhyan.open_imaging.test.TestImage.OUT_FOLDER;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 abstract class GifDecoderTest {
 
@@ -54,26 +54,23 @@ abstract class GifDecoderTest {
     }
 
     @Test
-    public void writeFramesOfAllImagesToDisk() {
+    public void writeFramesOfAllImagesToDisk() throws IOException {
         writeFramesOfImagesToDisk(IMAGES.values());
     }
 
     @Test
-    public void writeFramesOfSubsetOfImagesToDisk() {
+    public void writeFramesOfSubsetOfImagesToDisk() throws IOException {
         writeFramesOfImagesToDisk(IMAGES_SUBSET.values());
     }
 
-    void writeFramesOfImagesToDisk(Collection<TestImage> images) {
-        images.forEach(this::writeFramesOfImageToDisk);
+    void writeFramesOfImagesToDisk(Collection<TestImage> images) throws IOException {
+        for (TestImage img : images) {
+            writeFramesOfImageToDisk(img);
+        }
         System.out.println("Wrote frames of " + images.size() + " image files to " + OUT_FOLDER);
     }
 
-    void writeFramesOfImageToDisk(TestImage img) {
-        try {
-            img.writeFramesToDisk(readImageFrames(img));
-        } catch (final Exception e) {
-            e.printStackTrace();
-            fail();
-        }
+    void writeFramesOfImageToDisk(TestImage img) throws IOException {
+        img.writeFramesToDisk(readImageFrames(img));
     }
 }
