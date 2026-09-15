@@ -25,7 +25,8 @@ void example(final byte[] data) throws Exception {
 }
 ```
 
-You can also read from an input stream, though it will be converted to a byte array internally:
+You can also read from an input stream when its `available()` value equals its remaining content,
+such as the `FileInputStream` in this example:
 
 ```java
 	final FileInputStream data = new FileInputStream(IN_FOLDER + "some.gif");
@@ -42,7 +43,7 @@ You can also read from an input stream, though it will be converted to a byte ar
   <a href="http://www.fmsware.com/stuff/gif.html">Kevin Weiner's decoder</a> will either throw the same exception or
   render the frames of these images incorrectly. This decoder does not suffer from this bug.
 * Requires Java 8.
-* Should support Java 11 and Java 17 (untested).
+* Tested with Java 17.
 
 ### Performance
 
@@ -68,7 +69,8 @@ Feel free to run your own tests (see next section), any feedback is highly appre
 
 ### Running the tests and benchmarks
 
-You'll need a JDK, `gradle` and `make`. Run `make` to list available commands. You'll see something like this:
+The included Gradle Wrapper requires JDK 17 or newer. Run `gradlew.bat build` on Windows or
+`./gradlew build` on macOS/Linux. `make` is optional; run `make` to list its convenience commands:
 
     Usage: make [target]
 
