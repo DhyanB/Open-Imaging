@@ -7,15 +7,16 @@ import java.security.NoSuchAlgorithmException;
 final class FrameHash {
     private static final char[] HEX = "0123456789abcdef".toCharArray();
 
-    private FrameHash() {
-    }
+    private FrameHash() {}
 
     static String sha256(final BufferedImage image) {
         try {
             final MessageDigest digest = MessageDigest.getInstance("SHA-256");
             updateInt(digest, image.getWidth());
             updateInt(digest, image.getHeight());
-            final int[] pixels = image.getRGB(0, 0, image.getWidth(), image.getHeight(), null, 0, image.getWidth());
+            final int[] pixels =
+                    image.getRGB(
+                            0, 0, image.getWidth(), image.getHeight(), null, 0, image.getWidth());
             for (int pixel : pixels) {
                 updateInt(digest, pixel);
             }

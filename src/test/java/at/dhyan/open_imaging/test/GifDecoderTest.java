@@ -1,16 +1,15 @@
 package at.dhyan.open_imaging.test;
 
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
+import static at.dhyan.open_imaging.test.TestImage.OUT_FOLDER;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Map;
-
-import static at.dhyan.open_imaging.test.TestImage.OUT_FOLDER;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 abstract class GifDecoderTest {
 
@@ -22,7 +21,9 @@ abstract class GifDecoderTest {
     @BeforeAll
     public static void setUp() {
         IMAGES = TestImageReader.getAllTestImages();
-        IMAGES_SUBSET = TestImageReader.getSubsetOfTestImages(Arrays.asList("dance", "eat_book", "just_do_it"));
+        IMAGES_SUBSET =
+                TestImageReader.getSubsetOfTestImages(
+                        Arrays.asList("dance", "eat_book", "just_do_it"));
     }
 
     @Test

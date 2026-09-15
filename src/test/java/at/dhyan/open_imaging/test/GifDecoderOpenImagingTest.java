@@ -1,15 +1,14 @@
 package at.dhyan.open_imaging.test;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 import at.dhyan.open_imaging.GifDecoder;
 import at.dhyan.open_imaging.GifDecoder.GifImage;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.MethodSource;
-
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.stream.Stream;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
 public class GifDecoderOpenImagingTest extends GifDecoderTest {
 

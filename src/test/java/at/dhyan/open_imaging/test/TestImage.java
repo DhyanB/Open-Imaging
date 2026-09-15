@@ -1,12 +1,12 @@
 package at.dhyan.open_imaging.test;
 
-import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import javax.imageio.ImageIO;
 
 public class TestImage {
     static final String IN_FOLDER = "src/test/resources/input-images/";
@@ -20,7 +20,8 @@ public class TestImage {
     public final byte[] data;
     public final ByteArrayInputStream stream;
 
-    public TestImage(final String name, final int width, final int height, final int frames) throws IOException {
+    public TestImage(final String name, final int width, final int height, final int frames)
+            throws IOException {
         this.name = name;
         path = Paths.get(IN_FOLDER, name + ".gif");
         this.width = width;

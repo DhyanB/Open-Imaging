@@ -1,7 +1,6 @@
 package at.dhyan.open_imaging.test;
 
 import at.dhyan.open_imaging.GifDecoder;
-
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -14,22 +13,23 @@ import java.util.Collections;
 import java.util.List;
 
 public final class FrameHashGenerator {
-    static final List<String> IMAGE_NAMES = Collections.unmodifiableList(Arrays.asList(
-            "cat",
-            "c64",
-            "dance",
-            "dispose_background_1",
-            "dispose_none_1",
-            "hands",
-            "sample",
-            "sample_trans",
-            "sign",
-            "smile",
-            "steps",
-            "stick_man"));
+    static final List<String> IMAGE_NAMES =
+            Collections.unmodifiableList(
+                    Arrays.asList(
+                            "cat",
+                            "c64",
+                            "dance",
+                            "dispose_background_1",
+                            "dispose_none_1",
+                            "hands",
+                            "sample",
+                            "sample_trans",
+                            "sign",
+                            "smile",
+                            "steps",
+                            "stick_man"));
 
-    private FrameHashGenerator() {
-    }
+    private FrameHashGenerator() {}
 
     public static void main(final String[] args) throws IOException {
         if (args.length != 1) {
@@ -44,8 +44,12 @@ public final class FrameHashGenerator {
             final GifDecoder.GifImage gif = GifDecoder.read(image.data);
             for (int frameIndex = 0; frameIndex < gif.getFrameCount(); frameIndex++) {
                 final BufferedImage frame = gif.getFrame(frameIndex);
-                hashes.append(imageName).append(".gif/").append(frameIndex).append('=')
-                        .append(FrameHash.sha256(frame)).append('\n');
+                hashes.append(imageName)
+                        .append(".gif/")
+                        .append(frameIndex)
+                        .append('=')
+                        .append(FrameHash.sha256(frame))
+                        .append('\n');
             }
         }
 
