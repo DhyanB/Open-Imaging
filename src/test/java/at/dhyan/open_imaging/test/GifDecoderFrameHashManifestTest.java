@@ -2,6 +2,7 @@ package at.dhyan.open_imaging.test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import at.dhyan.open_imaging.GifDecoder;
@@ -16,6 +17,21 @@ import java.util.Map;
 import org.junit.jupiter.api.Test;
 
 class GifDecoderFrameHashManifestTest {
+    @Test
+    void cachesFramesAcrossRandomAccess() throws IOException {
+        final Map<String, String> expectedHashes = readExpectedHashes();
+        final TestImage image = TestImageReader.getAllTestImages().get("dance");
+        final GifDecoder.GifImage gif = GifDecoder.read(image.data);
+
+        final BufferedImage laterFrame = gif.getFrame(5);
+        final BufferedImage earlierFrame = gif.getFrame(1);
+
+        assertEquals(expectedHashes.get("dance.gif/5"), FrameHash.sha256(laterFrame));
+        assertEquals(expectedHashes.get("dance.gif/1"), FrameHash.sha256(earlierFrame));
+        assertSame(laterFrame, gif.getFrame(5));
+        assertSame(earlierFrame, gif.getFrame(1));
+    }
+
     @Test
     void matchesApprovedFrameHashes() throws IOException {
         final Map<String, String> expectedHashes = readExpectedHashes();
