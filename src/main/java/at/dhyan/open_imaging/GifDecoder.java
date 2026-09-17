@@ -170,6 +170,9 @@ public final class GifDecoder {
         private BufferedImage img; // Full drawn image, not just the frame area
     }
 
+    /**
+     * A decoded GIF image. Instances are mutable and not thread-safe.
+     */
     public final class GifImage {
         public String header; // Bytes 0-5, GIF87a or GIF89a
         private int w; // Unsigned 16 Bit, the least significant byte first
@@ -338,14 +341,11 @@ public final class GifDecoder {
         }
 
         /**
+         * Frames are decoded lazily and cached. The returned image is the cached
+         * instance and must not be modified by callers. Random access may decode
+         * earlier frames.
+         *
          * @param index Index of the frame to return as image, starting from 0.
-         *              For incremental calls such as [0, 1, 2, ...] the method's
-         *              run time is O(1) as only one frame is drawn per call. For
-         *              random access calls such as [7, 12, ...] the run time is
-         *              O(N+1) with N being the number of previous frames that
-         *              need to be drawn before N+1 can be drawn on top. Once a
-         *              frame has been drawn it is being cached and the run time
-         *              is more or less O(0) to retrieve it from the list.
          * @return A BufferedImage for the specified frame.
          */
         public BufferedImage getFrame(final int index) {
@@ -392,9 +392,11 @@ public final class GifDecoder {
     static final boolean DEBUG_MODE = false;
 
     /**
+     * The decoder may tolerate trailing corrupt data and return the frames decoded so far.
+     *
      * @param in Raw image data as a byte[] array
      * @return A GifImage object exposing the properties of the GIF image.
-     * @throws IOException If the image violates the GIF specification or is truncated.
+     * @throws IOException If malformed or truncated input is rejected.
      */
     public static GifImage read(final byte[] in) throws IOException {
         final GifDecoder decoder = new GifDecoder();
