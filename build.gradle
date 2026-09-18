@@ -18,7 +18,7 @@ description = 'Open Imaging'
 
 java {
     toolchain {
-        languageVersion = JavaLanguageVersion.of(17)
+        languageVersion = JavaLanguageVersion.of(21)
     }
 }
 
@@ -39,7 +39,7 @@ tasks.withType(Test).configureEach {
 
 def testJavaVersion = providers.gradleProperty('testJavaVersion')
         .map { JavaLanguageVersion.of(it as Integer) }
-        .orElse(JavaLanguageVersion.of(17))
+        .orElse(JavaLanguageVersion.of(21))
 
 test {
     javaLauncher = javaToolchains.launcherFor {

@@ -312,21 +312,28 @@ public final class GifDecoder {
         }
 
         /**
-         * Returns the background color of the first frame in this GIF image. If
-         * the frame has a local color table, the returned color will be from
-         * that table. If not, the color will be from the global color table.
-         * Returns 0 if there is neither a local nor a global color table.
+         * Returns the background color of the first frame in this GIF image. A
+         * valid local color table takes precedence; otherwise, a valid global
+         * color table is used. Returns 0 if there is no frame or no valid
+         * palette entry at the background color index.
          *
          * @return 32 bit ARGB color in the form 0xAARRGGBB
          */
         public final int getBackgroundColor() {
+            if (frames.isEmpty()) {
+                return 0;
+            }
             final GifFrame frame = frames.get(0);
-            if (frame.hasLocColTbl) {
+            if (frame.hasLocColTbl && isValidColorIndex(frame.localColTbl, bgColIndex)) {
                 return frame.localColTbl[bgColIndex];
-            } else if (hasGlobColTbl) {
+            } else if (hasGlobColTbl && isValidColorIndex(globalColTbl, bgColIndex)) {
                 return globalColTbl[bgColIndex];
             }
             return 0;
+        }
+
+        private boolean isValidColorIndex(final int[] colorTable, final int index) {
+            return colorTable != null && index >= 0 && index < colorTable.length;
         }
 
         /**

@@ -7,10 +7,23 @@ import at.dhyan.open_imaging.GifDecoder.GifImage;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.stream.Stream;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
 public class GifDecoderOpenImagingTest extends GifDecoderTest {
+
+    @Test
+    public void getBackgroundColorHandlesMissingFramesAndInvalidPaletteIndexes()
+            throws IOException {
+        final GifImage emptyImage = new GifDecoder().new GifImage();
+        assertEquals(0, emptyImage.getBackgroundColor());
+
+        final TestImage image = TestImageReader.getAllTestImages().get("sample");
+        final GifImage imageWithInvalidBackgroundIndex = GifDecoder.read(image.data);
+        imageWithInvalidBackgroundIndex.bgColIndex = Integer.MAX_VALUE;
+        assertEquals(0, imageWithInvalidBackgroundIndex.getBackgroundColor());
+    }
 
     @ParameterizedTest(name = "{0}")
     @MethodSource("allTestImages")

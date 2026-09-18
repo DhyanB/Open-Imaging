@@ -43,7 +43,7 @@ such as the `FileInputStream` in this example:
   <a href="http://www.fmsware.com/stuff/gif.html">Kevin Weiner's decoder</a> will either throw the same exception or
   render the frames of these images incorrectly. This decoder does not suffer from this bug.
 * Library runtime: Java 8 or newer.
-* Build: JDK 17 or newer.
+* Build: JDK 21.
 * GitHub Actions runs the unit tests on Java 8, Java 11, and Java 17.
 
 ### Performance
