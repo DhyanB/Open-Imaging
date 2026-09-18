@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import at.dhyan.open_imaging.GifDecoder;
 import at.dhyan.open_imaging.GifDecoder.GifImage;
 import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
@@ -12,6 +13,24 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
 public class GifDecoderOpenImagingTest extends GifDecoderTest {
+
+    @Test
+    public void readsInputStreamUntilEof() throws IOException {
+        final TestImage image = TestImageReader.getAllTestImages().get("sample");
+        final ByteArrayInputStream stream =
+                new ByteArrayInputStream(image.data) {
+                    @Override
+                    public synchronized int available() {
+                        return 0;
+                    }
+                };
+
+        final GifImage gifImage = GifDecoder.read(stream);
+
+        assertEquals(image.width, gifImage.getWidth());
+        assertEquals(image.height, gifImage.getHeight());
+        assertEquals(image.frames, gifImage.getFrameCount());
+    }
 
     @Test
     public void getBackgroundColorHandlesMissingFramesAndInvalidPaletteIndexes()

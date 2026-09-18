@@ -25,12 +25,12 @@ void example(final byte[] data) throws Exception {
 }
 ```
 
-You can also read from an input stream when its `available()` value equals its remaining content,
-such as the `FileInputStream` in this example:
+You can also read directly from an input stream. The caller remains responsible for closing it:
 
 ```java
-	final FileInputStream data = new FileInputStream(IN_FOLDER + "some.gif");
-	final GifImage gif = GifDecoder.read(data);
+	try (FileInputStream data = new FileInputStream(IN_FOLDER + "some.gif")) {
+		final GifImage gif = GifDecoder.read(data);
+	}
 ```
 
 ### Compatibility

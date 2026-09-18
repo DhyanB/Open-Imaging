@@ -3,6 +3,7 @@ package at.dhyan.open_imaging;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
@@ -475,19 +476,20 @@ public final class GifDecoder {
     }
 
     /**
-     * @param is Image data as input stream. This method will read from the
-     *           input stream's current position. It will not reset the
-     *           position before reading and won't reset or close the stream
-     *           afterwards. Call these methods before and after calling this
-     *           method as needed.
+     * @param is Image data as input stream. This method reads from the current
+     *           position through EOF. It does not reset or close the stream.
      * @return A GifImage object exposing the properties of the GIF image.
      * @throws IOException If an I/O error occurs, the image violates the GIF
      *                     specification or the GIF is truncated.
      */
     public static GifImage read(final InputStream is) throws IOException {
-        final byte[] data = new byte[is.available()];
-        is.read(data, 0, data.length);
-        return read(data);
+        final ByteArrayOutputStream data = new ByteArrayOutputStream();
+        final byte[] buffer = new byte[8192];
+        int bytesRead;
+        while ((bytesRead = is.read(buffer)) != -1) {
+            data.write(buffer, 0, bytesRead);
+        }
+        return read(data.toByteArray());
     }
 
     /**
