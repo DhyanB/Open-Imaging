@@ -1,6 +1,7 @@
 package at.dhyan.open_imaging.test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import at.dhyan.open_imaging.GifDecoder;
 import at.dhyan.open_imaging.GifDecoder.GifImage;
@@ -13,6 +14,8 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
 public class GifDecoderOpenImagingTest extends GifDecoderTest {
+
+    private static final byte[] GIF_HEADER = {'G', 'I', 'F', '8', '9', 'a'};
 
     @Test
     public void readsInputStreamUntilEof() throws IOException {
@@ -30,6 +33,35 @@ public class GifDecoderOpenImagingTest extends GifDecoderTest {
         assertEquals(image.width, gifImage.getWidth());
         assertEquals(image.height, gifImage.getHeight());
         assertEquals(image.frames, gifImage.getFrameCount());
+    }
+
+    @Test
+    public void rejectsNullPublicInputs() {
+        assertThrows(NullPointerException.class, () -> GifDecoder.read((byte[]) null));
+        assertThrows(NullPointerException.class, () -> GifDecoder.read((java.io.InputStream) null));
+    }
+
+    @Test
+    public void rejectsTruncatedHeadersAndLogicalScreenDescriptors() {
+        final IOException emptyInput =
+                assertThrows(IOException.class, () -> GifDecoder.read(new byte[0]));
+        assertEquals("GIF header is truncated.", emptyInput.getMessage());
+
+        for (int length = GIF_HEADER.length; length < 13; length++) {
+            final byte[] data = new byte[length];
+            System.arraycopy(GIF_HEADER, 0, data, 0, GIF_HEADER.length);
+            final IOException exception =
+                    assertThrows(IOException.class, () -> GifDecoder.read(data));
+            assertEquals("GIF logical screen descriptor is truncated.", exception.getMessage());
+        }
+
+        final byte[] streamData = new byte[GIF_HEADER.length];
+        System.arraycopy(GIF_HEADER, 0, streamData, 0, GIF_HEADER.length);
+        final IOException streamInput =
+                assertThrows(
+                        IOException.class,
+                        () -> GifDecoder.read(new ByteArrayInputStream(streamData)));
+        assertEquals("GIF logical screen descriptor is truncated.", streamInput.getMessage());
     }
 
     @Test

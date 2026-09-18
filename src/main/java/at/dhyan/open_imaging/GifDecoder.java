@@ -9,6 +9,7 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import static java.lang.System.arraycopy;
 
@@ -404,13 +405,18 @@ public final class GifDecoder {
      *
      * @param in Raw image data as a byte[] array
      * @return A GifImage object exposing the properties of the GIF image.
-     * @throws IOException If malformed or truncated input is rejected.
+     * @throws IOException If malformed or truncated input cannot be tolerated.
+     * @throws NullPointerException If the input is null.
      */
     public static GifImage read(final byte[] in) throws IOException {
+        Objects.requireNonNull(in, "GIF data must not be null.");
         final GifDecoder decoder = new GifDecoder();
         final GifImage img = decoder.new GifImage();
         GifFrame frame = null; // Currently open frame
         int pos = readHeader(in, img); // Read header, get next byte position
+        if (in.length < pos + 7) {
+            throw new IOException("GIF logical screen descriptor is truncated.");
+        }
         pos = readLogicalScreenDescriptor(img, in, pos);
         if (img.hasGlobColTbl) {
             img.globalColTbl = new int[img.sizeOfGlobColTbl];
@@ -481,8 +487,10 @@ public final class GifDecoder {
      * @return A GifImage object exposing the properties of the GIF image.
      * @throws IOException If an I/O error occurs, the image violates the GIF
      *                     specification or the GIF is truncated.
+     * @throws NullPointerException If the input stream is null.
      */
     public static GifImage read(final InputStream is) throws IOException {
+        Objects.requireNonNull(is, "Input stream must not be null.");
         final ByteArrayOutputStream data = new ByteArrayOutputStream();
         final byte[] buffer = new byte[8192];
         int bytesRead;
@@ -555,7 +563,7 @@ public final class GifDecoder {
      */
     static int readHeader(final byte[] in, final GifImage img) throws IOException {
         if (in.length < 6) { // Check first 6 bytes
-            throw new IOException("Image is truncated.");
+            throw new IOException("GIF header is truncated.");
         }
         img.header = new String(in, 0, 6, StandardCharsets.US_ASCII);
         if (!img.header.equals("GIF87a") && !img.header.equals("GIF89a")) {
