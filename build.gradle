@@ -53,7 +53,6 @@ test {
         outputs.upToDateWhen { false } // Always prints stdout
         showStandardStreams = true
     }
-    systemProperties(System.getProperties())
 }
 
 tasks.register('exportFrames', Test) {
@@ -78,7 +77,8 @@ tasks.register('benchmark', Test) {
         outputs.upToDateWhen { false }
         showStandardStreams = true
     }
-    systemProperties(System.getProperties())
+    systemProperty 'warmups', System.getProperty('warmups', '1')
+    systemProperty 'runs', System.getProperty('runs', '1')
 }
 
 tasks.register('generateFrameHashes', JavaExec) {
