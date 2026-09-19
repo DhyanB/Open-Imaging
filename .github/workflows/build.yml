@@ -5,6 +5,10 @@ on:
     branches: [master]
   pull_request:
 
+permissions:
+  contents: read
+  checks: write
+
 jobs:
   test:
     runs-on: ubuntu-24.04
@@ -27,3 +31,10 @@ jobs:
           java-version: ${{ matrix.test-java }}
       - name: Build and test
         run: ./gradlew build -PtestJavaVersion=${{ matrix.test-java }} -Dorg.gradle.java.home="$GRADLE_JAVA_HOME" -Dorg.gradle.java.installations.paths="$JAVA_HOME"
+      - name: Report test results
+        if: ${{ !cancelled() }}
+        uses: dorny/test-reporter@v3
+        with:
+          name: JUnit tests (Java ${{ matrix.test-java }})
+          path: build/test-results/test/TEST-*.xml
+          reporter: java-junit

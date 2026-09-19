@@ -24,7 +24,7 @@ b:
 	$(GRADLE_CMD) build -x test
 
 t:
-	$(GRADLE_CMD) test --stacktrace --tests GifDecoderOpenImagingTest
+	$(GRADLE_CMD) test --stacktrace
 
 cb:
 	$(GRADLE_CMD) clean build -x test

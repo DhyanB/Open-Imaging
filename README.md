@@ -76,7 +76,7 @@ Feel free to run your own tests (see the next section). Any feedback is highly a
 
 Install JDK 21 to build this project. Run `gradlew.bat build` on Windows or
 `./gradlew build` on macOS/Linux. To run the full unit test suite, use `gradlew.bat test`
-or `./gradlew test`. `make` is optional; its `t` target runs only `GifDecoderOpenImagingTest`.
+or `./gradlew test`. `make` is optional; its `t` target runs the full unit test suite.
 Run `make` to list its convenience commands:
 
     Usage: make [target]
@@ -84,7 +84,7 @@ Run `make` to list its convenience commands:
     Targets:
     help               Show this help message.
     b                  Build.
-    t                  Run GifDecoderOpenImagingTest with default parameters.
+    t                  Run all tests with default parameters.
     cb                 Clean and build.
     cbt                Clean, build and test.
     bench              Benchmark using 1 warmup and 1 run.
