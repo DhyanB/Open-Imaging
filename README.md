@@ -50,7 +50,7 @@ You can also read directly from an input stream. The caller remains responsible 
 ### Performance
 
 This decoder has been frequently benchmarked against Kevin Weiner's decoder, which is well crafted and
-delivers high performance. Recent results indicate that both decoders perform on the same level:
+delivers high performance. Historical benchmark results showed similar performance:
 
 	Benchmark results from GifDecoderOpenImagingTest.benchmark()
         Image files: 33
@@ -74,15 +74,17 @@ Feel free to run your own tests (see the next section). Any feedback is highly a
 
 ### Running the tests and benchmarks
 
-The included Gradle Wrapper requires JDK 17 or newer. Run `gradlew.bat build` on Windows or
-`./gradlew build` on macOS/Linux. `make` is optional; run `make` to list its convenience commands:
+Install JDK 21 to build this project. Run `gradlew.bat build` on Windows or
+`./gradlew build` on macOS/Linux. To run the full unit test suite, use `gradlew.bat test`
+or `./gradlew test`. `make` is optional; its `t` target runs only `GifDecoderOpenImagingTest`.
+Run `make` to list its convenience commands:
 
     Usage: make [target]
 
     Targets:
     help               Show this help message.
     b                  Build.
-    t                  Run all tests with default parameters.
+    t                  Run GifDecoderOpenImagingTest with default parameters.
     cb                 Clean and build.
     cbt                Clean, build and test.
     bench              Benchmark using 1 warmup and 1 run.
@@ -90,8 +92,9 @@ The included Gradle Wrapper requires JDK 17 or newer. Run `gradlew.bat build` on
     bench-kw           Benchmark Kevin Weiner's GifDecoder using 1 warmup and 1 run.
     bench-kw w=i r=j   Benchmark Kevin Weiner's GifDecoder using i warmups and j runs.
 
-One of the tests run by `make t` loops through all test images and decodes and writes their individual frames
-to `src/test/resources/output-frames/`. This is a test I frequently run after changing the code to ensure correctness.
+To export individual frames from the test images for visual inspection, run `gradlew.bat exportFrames`
+on Windows or `./gradlew exportFrames` on macOS/Linux. Frames are written to `build/output-frames/`;
+the regular test suite does not export them.
 
 ### Test data
 
