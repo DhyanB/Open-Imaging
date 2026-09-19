@@ -9,6 +9,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         test-java: ['8', '11', '17']
 
@@ -26,3 +27,12 @@ jobs:
           java-version: ${{ matrix.test-java }}
       - name: Build and test
         run: ./gradlew build -PtestJavaVersion=${{ matrix.test-java }} -Dorg.gradle.java.home="$GRADLE_JAVA_HOME" -Dorg.gradle.java.installations.paths="$JAVA_HOME"
+      - name: Upload test reports
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: test-reports-java-${{ matrix.test-java }}
+          path: |
+            build/test-results/test/TEST-*.xml
+            build/reports/tests/test/
+          retention-days: 14
