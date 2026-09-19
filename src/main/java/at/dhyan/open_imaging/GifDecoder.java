@@ -60,6 +60,57 @@ import static java.lang.System.arraycopy;
  * @version 1.09 November 2017
  */
 public final class GifDecoder {
+    /**
+     * Resource limits applied while decoding a GIF. These limits apply individually
+     * and do not cap total memory usage, including cached frames.
+     */
+    public static final class DecodeLimits {
+        /**
+         * Default limits used by the read overloads without a DecodeLimits parameter.
+         */
+        public static final DecodeLimits DEFAULT = new DecodeLimits(10_000_000, 1_000, 64 * 1024 * 1024);
+
+        private final int maxPixels;
+        private final int maxFrames;
+        private final int maxEncodedDataBytes;
+
+        /**
+         * @param maxPixels Maximum pixels in a logical screen or individual frame.
+         * @param maxFrames Maximum number of frames.
+         * @param maxEncodedDataBytes Maximum encoded GIF data size in bytes.
+         * @throws IllegalArgumentException If any limit is not positive.
+         */
+        public DecodeLimits(final int maxPixels, final int maxFrames, final int maxEncodedDataBytes) {
+            if (maxPixels <= 0 || maxFrames <= 0 || maxEncodedDataBytes <= 0) {
+                throw new IllegalArgumentException("Decode limits must be positive.");
+            }
+            this.maxPixels = maxPixels;
+            this.maxFrames = maxFrames;
+            this.maxEncodedDataBytes = maxEncodedDataBytes;
+        }
+
+        /**
+         * @return Maximum pixels in a logical screen or individual frame.
+         */
+        public int getMaxPixels() {
+            return maxPixels;
+        }
+
+        /**
+         * @return Maximum number of frames.
+         */
+        public int getMaxFrames() {
+            return maxFrames;
+        }
+
+        /**
+         * @return Maximum encoded GIF data size in bytes.
+         */
+        public int getMaxEncodedDataBytes() {
+            return maxEncodedDataBytes;
+        }
+    }
+
     static final class BitReader {
         private int nextBitToRead;
         private int numberOfBitsToRead;
@@ -195,6 +246,15 @@ public final class GifDecoder {
         private final BitReader bits = new BitReader();
         private final CodeTable codes = new CodeTable();
         private Graphics2D g;
+
+        private GifFrame addFrame(final DecodeLimits limits) throws IOException {
+            if (frames.size() >= limits.maxFrames) {
+                throw new IOException("GIF exceeds the maximum frame count of " + limits.maxFrames + ".");
+            }
+            final GifFrame frame = new GifFrame();
+            frames.add(frame);
+            return frame;
+        }
 
         private int[] decode(final GifFrame fr, final int[] activeColTbl) {
             codes.init(fr, activeColTbl, bits);
@@ -402,14 +462,28 @@ public final class GifDecoder {
 
     /**
      * The decoder may tolerate trailing corrupt data and return the frames decoded so far.
+     * Default resource limits are applied.
      *
      * @param in Raw image data as a byte[] array
      * @return A GifImage object exposing the properties of the GIF image.
-     * @throws IOException If malformed or truncated input cannot be tolerated.
+     * @throws IOException If malformed or truncated input cannot be tolerated or a limit is exceeded.
      * @throws NullPointerException If the input is null.
      */
     public static GifImage read(final byte[] in) throws IOException {
+        return read(in, DecodeLimits.DEFAULT);
+    }
+
+    /**
+     * @param in Raw image data as a byte[] array.
+     * @param limits Resource limits for this decode.
+     * @return A GifImage object exposing the properties of the GIF image.
+     * @throws IOException If malformed or truncated input cannot be tolerated or a limit is exceeded.
+     * @throws NullPointerException If the input or limits are null.
+     */
+    public static GifImage read(final byte[] in, final DecodeLimits limits) throws IOException {
         Objects.requireNonNull(in, "GIF data must not be null.");
+        Objects.requireNonNull(limits, "Decode limits must not be null.");
+        validateEncodedDataSize(in.length, limits);
         final GifDecoder decoder = new GifDecoder();
         final GifImage img = decoder.new GifImage();
         GifFrame frame = null; // Currently open frame
@@ -417,7 +491,7 @@ public final class GifDecoder {
         if (in.length < pos + 7) {
             throw new IOException("GIF logical screen descriptor is truncated.");
         }
-        pos = readLogicalScreenDescriptor(img, in, pos);
+        pos = readLogicalScreenDescriptor(img, in, pos, limits);
         if (img.hasGlobColTbl) {
             img.globalColTbl = new int[img.sizeOfGlobColTbl];
             pos = readColTbl(in, img.globalColTbl, pos);
@@ -442,8 +516,7 @@ public final class GifDecoder {
                             break;
                         case 0xF9: // Graphic control extension
                             if (frame == null) {
-                                frame = decoder.new GifFrame();
-                                img.frames.add(frame);
+                                frame = img.addFrame(limits);
                             }
                             pos = readGraphicControlExt(frame, in, pos);
                             break;
@@ -453,10 +526,9 @@ public final class GifDecoder {
                     break;
                 case 0x2C: // Image descriptor
                     if (frame == null) {
-                        frame = decoder.new GifFrame();
-                        img.frames.add(frame);
+                        frame = img.addFrame(limits);
                     }
-                    pos = readImgDescr(frame, in, pos);
+                    pos = readImgDescr(frame, in, pos, limits);
                     if (frame.hasLocColTbl) {
                         frame.localColTbl = new int[frame.sizeOfLocColTbl];
                         pos = readColTbl(in, frame.localColTbl, pos);
@@ -482,22 +554,44 @@ public final class GifDecoder {
     }
 
     /**
+     * Default resource limits are applied.
+     *
      * @param is Image data as input stream. This method reads from the current
      *           position through EOF. It does not reset or close the stream.
      * @return A GifImage object exposing the properties of the GIF image.
      * @throws IOException If an I/O error occurs, the image violates the GIF
-     *                     specification or the GIF is truncated.
+     *                     specification, is truncated, or exceeds a limit.
      * @throws NullPointerException If the input stream is null.
      */
     public static GifImage read(final InputStream is) throws IOException {
+        return read(is, DecodeLimits.DEFAULT);
+    }
+
+    /**
+     * @param is Image data as input stream. This method reads from the current
+     *           position through EOF. It does not reset or close the stream.
+     * @param limits Resource limits for this decode.
+     * @return A GifImage object exposing the properties of the GIF image.
+     * @throws IOException If an I/O error occurs, the image violates the GIF
+     *                     specification, is truncated, or exceeds a limit.
+     * @throws NullPointerException If the input stream or limits are null.
+     */
+    public static GifImage read(final InputStream is, final DecodeLimits limits) throws IOException {
         Objects.requireNonNull(is, "Input stream must not be null.");
+        Objects.requireNonNull(limits, "Decode limits must not be null.");
         final ByteArrayOutputStream data = new ByteArrayOutputStream();
         final byte[] buffer = new byte[8192];
         int bytesRead;
         while ((bytesRead = is.read(buffer)) != -1) {
+            if (bytesRead > limits.maxEncodedDataBytes - data.size()) {
+                throw new IOException(
+                        "GIF data exceeds the maximum encoded data size of "
+                                + limits.maxEncodedDataBytes
+                                + " bytes.");
+            }
             data.write(buffer, 0, bytesRead);
         }
-        return read(data.toByteArray());
+        return read(data.toByteArray(), limits);
     }
 
     /**
@@ -638,12 +732,13 @@ public final class GifDecoder {
      * @param i  Index of the image separator, i.e. the first block byte
      * @return Index of the first byte after this block
      */
-    static int readImgDescr(final GifFrame fr, final byte[] in, int i) {
+    static int readImgDescr(final GifFrame fr, final byte[] in, int i, final DecodeLimits limits)
+            throws IOException {
         fr.x = in[++i] & 0xFF | (in[++i] & 0xFF) << 8; // Byte 1-2: left
         fr.y = in[++i] & 0xFF | (in[++i] & 0xFF) << 8; // Byte 3-4: top
         fr.w = in[++i] & 0xFF | (in[++i] & 0xFF) << 8; // Byte 5-6: width
         fr.h = in[++i] & 0xFF | (in[++i] & 0xFF) << 8; // Byte 7-8: height
-        fr.wh = fr.w * fr.h;
+        fr.wh = checkedPixelCount(fr.w, fr.h, "GIF frame", limits);
         final byte b = in[++i]; // Byte 9 is a packed byte
         fr.hasLocColTbl = (b & 0b10000000) >>> 7 == 1; // Bit 7
         fr.interlaceFlag = (b & 0b01000000) >>> 6 == 1; // Bit 6
@@ -658,10 +753,12 @@ public final class GifDecoder {
      * @param i   Start index of this block.
      * @return Index of the first byte after this block.
      */
-    static int readLogicalScreenDescriptor(final GifImage img, final byte[] in, final int i) {
+    static int readLogicalScreenDescriptor(
+            final GifImage img, final byte[] in, final int i, final DecodeLimits limits)
+            throws IOException {
         img.w = in[i] & 0xFF | (in[i + 1] & 0xFF) << 8; // 16 bit, LSB 1st
         img.h = in[i + 2] & 0xFF | (in[i + 3] & 0xFF) << 8; // 16 bit
-        img.wh = img.w * img.h;
+        img.wh = checkedPixelCount(img.w, img.h, "GIF logical screen", limits);
         final byte b = in[i + 4]; // Byte 4 is a packed byte
         img.hasGlobColTbl = (b & 0b10000000) >>> 7 == 1; // Bit 7
         final int colResPower = ((b & 0b01110000) >>> 4) + 1; // Bits 6-4
@@ -672,6 +769,27 @@ public final class GifDecoder {
         img.bgColIndex = in[i + 5] & 0xFF; // 1 Byte
         img.pxAspectRatio = in[i + 6] & 0xFF; // 1 Byte
         return i + 7;
+    }
+
+    private static int checkedPixelCount(
+            final int width, final int height, final String type, final DecodeLimits limits)
+            throws IOException {
+        final long pixelCount = (long) width * height;
+        if (pixelCount > limits.maxPixels) {
+            throw new IOException(
+                    type + " exceeds the maximum pixel count of " + limits.maxPixels + ".");
+        }
+        return (int) pixelCount;
+    }
+
+    private static void validateEncodedDataSize(final int size, final DecodeLimits limits)
+            throws IOException {
+        if (size > limits.maxEncodedDataBytes) {
+            throw new IOException(
+                    "GIF data exceeds the maximum encoded data size of "
+                            + limits.maxEncodedDataBytes
+                            + " bytes.");
+        }
     }
 
     /**

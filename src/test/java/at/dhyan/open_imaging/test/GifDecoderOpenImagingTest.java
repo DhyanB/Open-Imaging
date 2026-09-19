@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import at.dhyan.open_imaging.GifDecoder;
+import at.dhyan.open_imaging.GifDecoder.DecodeLimits;
 import at.dhyan.open_imaging.GifDecoder.GifImage;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
@@ -65,6 +66,58 @@ public class GifDecoderOpenImagingTest extends GifDecoderTest {
     }
 
     @Test
+    public void rejectsExcessiveLogicalScreenAndFrameDimensions() {
+        final IOException logicalScreen =
+                assertThrows(
+                        IOException.class,
+                        () -> GifDecoder.read(gifWithLogicalScreen(65535, 65535)));
+        assertEquals(
+                "GIF logical screen exceeds the maximum pixel count of 10000000.",
+                logicalScreen.getMessage());
+
+        final IOException frame =
+                assertThrows(IOException.class, () -> GifDecoder.read(gifWithFrame(65535, 65535)));
+        assertEquals("GIF frame exceeds the maximum pixel count of 10000000.", frame.getMessage());
+    }
+
+    @Test
+    public void appliesConfiguredDecodeLimits() throws IOException {
+        final IOException pixels =
+                assertThrows(
+                        IOException.class,
+                        () ->
+                                GifDecoder.read(
+                                        gifWithLogicalScreen(2, 2), new DecodeLimits(3, 1, 13)));
+        assertEquals(
+                "GIF logical screen exceeds the maximum pixel count of 3.", pixels.getMessage());
+
+        final TestImage sample = TestImageReader.getAllTestImages().get("sample");
+        final DecodeLimits dataLimit = new DecodeLimits(10_000_000, 1_000, sample.data.length - 1);
+        final IOException data =
+                assertThrows(IOException.class, () -> GifDecoder.read(sample.data, dataLimit));
+        assertEquals(
+                "GIF data exceeds the maximum encoded data size of "
+                        + dataLimit.getMaxEncodedDataBytes()
+                        + " bytes.",
+                data.getMessage());
+        final IOException streamData =
+                assertThrows(
+                        IOException.class,
+                        () -> GifDecoder.read(new ByteArrayInputStream(sample.data), dataLimit));
+        assertEquals(data.getMessage(), streamData.getMessage());
+
+        final TestImage dance = TestImageReader.getAllTestImages().get("dance");
+        final IOException frames =
+                assertThrows(
+                        IOException.class,
+                        () ->
+                                GifDecoder.read(
+                                        dance.data,
+                                        new DecodeLimits(10_000_000, 1, 64 * 1024 * 1024)));
+        assertEquals("GIF exceeds the maximum frame count of 1.", frames.getMessage());
+    }
+
+    @Test
     public void getBackgroundColorHandlesMissingFramesAndInvalidPaletteIndexes()
             throws IOException {
         final GifImage emptyImage = new GifDecoder().new GifImage();
@@ -87,6 +140,30 @@ public class GifDecoderOpenImagingTest extends GifDecoderTest {
 
     private static Stream<TestImage> allTestImages() {
         return TestImageReader.getAllTestImages().values().stream();
+    }
+
+    private static byte[] gifWithLogicalScreen(final int width, final int height) {
+        final byte[] data = new byte[13];
+        System.arraycopy(GIF_HEADER, 0, data, 0, GIF_HEADER.length);
+        writeLittleEndian(data, 6, width);
+        writeLittleEndian(data, 8, height);
+        return data;
+    }
+
+    private static byte[] gifWithFrame(final int width, final int height) {
+        final byte[] data = new byte[23];
+        System.arraycopy(GIF_HEADER, 0, data, 0, GIF_HEADER.length);
+        writeLittleEndian(data, 6, 1);
+        writeLittleEndian(data, 8, 1);
+        data[13] = 0x2C;
+        writeLittleEndian(data, 18, width);
+        writeLittleEndian(data, 20, height);
+        return data;
+    }
+
+    private static void writeLittleEndian(final byte[] data, final int index, final int value) {
+        data[index] = (byte) value;
+        data[index + 1] = (byte) (value >>> 8);
     }
 
     @Override

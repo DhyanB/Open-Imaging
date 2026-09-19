@@ -45,6 +45,7 @@ You can also read directly from an input stream. The caller remains responsible 
 * Library runtime: Java 8 or newer.
 * Build: JDK 21.
 * GitHub Actions runs the unit tests on Java 8, Java 11, and Java 17.
+* Default decoding limits are 10 million pixels per logical screen/frame, 1,000 frames, and 64 MiB of encoded GIF data. Pass `GifDecoder.DecodeLimits` to `read` to customize them. These limits apply individually and do not cap total memory usage, including cached frames.
 
 ### Performance
 
