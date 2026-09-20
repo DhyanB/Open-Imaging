@@ -38,3 +38,17 @@ jobs:
           name: JUnit tests (Java ${{ matrix.test-java }})
           path: build/test-results/test/TEST-*.xml
           reporter: java-junit
+      - name: Summarize coverage
+        if: ${{ !cancelled() && matrix.test-java == '17' }}
+        run: |
+          python3 - <<'PY' >> "$GITHUB_STEP_SUMMARY"
+          import xml.etree.ElementTree as ET
+
+          report = ET.parse('build/reports/jacoco/test/jacocoTestReport.xml').getroot()
+          line_counter = next(counter for counter in report.findall('counter')
+                              if counter.attrib['type'] == 'LINE')
+          covered = int(line_counter.attrib['covered'])
+          total = covered + int(line_counter.attrib['missed'])
+          print('## Code coverage')
+          print(f'Line coverage: **{covered / total:.1%}** ({covered} of {total} lines).')
+          PY

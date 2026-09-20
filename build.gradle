@@ -1,6 +1,7 @@
 plugins {
     id 'java'
     id 'com.diffplug.spotless' version '8.10.2'
+    id 'jacoco'
 }
 
 repositories {
@@ -53,6 +54,15 @@ test {
         outputs.upToDateWhen { false } // Always prints stdout
         showStandardStreams = true
     }
+    finalizedBy jacocoTestReport
+}
+
+jacocoTestReport {
+    dependsOn test
+    reports {
+        xml.required = true
+        html.required = true
+    }
 }
 
 tasks.register('exportFrames', Test) {
@@ -60,6 +70,9 @@ tasks.register('exportFrames', Test) {
     group = 'verification'
     testClassesDirs = sourceSets.test.output.classesDirs
     classpath = sourceSets.test.runtimeClasspath
+    jacoco {
+        enabled = false
+    }
     filter {
         includeTestsMatching '*.*writeFrames*'
     }
@@ -70,6 +83,9 @@ tasks.register('benchmark', Test) {
     group = 'verification'
     testClassesDirs = sourceSets.test.output.classesDirs
     classpath = sourceSets.test.runtimeClasspath
+    jacoco {
+        enabled = false
+    }
     filter {
         includeTestsMatching '*.*benchmark'
     }

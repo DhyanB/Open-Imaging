@@ -118,15 +118,72 @@ public class GifDecoderOpenImagingTest extends GifDecoderTest {
     }
 
     @Test
-    public void getBackgroundColorHandlesMissingFramesAndInvalidPaletteIndexes()
-            throws IOException {
+    public void decodeLimitsValidateAndExposeTheirValues() {
+        final DecodeLimits limits = new DecodeLimits(1, 2, 3);
+        assertEquals(1, limits.getMaxPixels());
+        assertEquals(2, limits.getMaxFrames());
+        assertEquals(3, limits.getMaxEncodedDataBytes());
+        assertThrows(IllegalArgumentException.class, () -> new DecodeLimits(0, 1, 1));
+    }
+
+    @Test
+    public void getBackgroundColorUsesTheFirstFramePalette() throws IOException {
         final GifImage emptyImage = new GifDecoder().new GifImage();
         assertEquals(0, emptyImage.getBackgroundColor());
 
         final TestImage image = TestImageReader.getAllTestImages().get("sample");
+        final GifImage imageWithGlobalColorTable = GifDecoder.read(image.data);
+        assertEquals(0xFFFFFFFF, imageWithGlobalColorTable.getBackgroundColor());
+
         final GifImage imageWithInvalidBackgroundIndex = GifDecoder.read(image.data);
         imageWithInvalidBackgroundIndex.bgColIndex = Integer.MAX_VALUE;
         assertEquals(0, imageWithInvalidBackgroundIndex.getBackgroundColor());
+
+        final GifImage imageWithLocalColorTable = GifDecoder.read(gifWithLocalColorTable());
+        assertEquals(0xFFFF0000, imageWithLocalColorTable.getBackgroundColor());
+    }
+
+    @Test
+    public void exposesFrameDelays() throws IOException {
+        final TestImage image = TestImageReader.getAllTestImages().get("sample");
+        assertEquals(0, GifDecoder.read(image.data).getDelay(0));
+    }
+
+    @Test
+    public void restoresThePreviousFrameWhenRequested() throws IOException {
+        final TestImage image = TestImageReader.getAllTestImages().get("dispose_prev");
+        final BufferedImage thirdFrame = GifDecoder.read(image.data).getFrame(2);
+
+        assertEquals(0xFF000000, thirdFrame.getRGB(50, 50));
+    }
+
+    @Test
+    public void readsPlainTextExtensionsAndRejectsMalformedBlocks() throws IOException {
+        final IOException invalidHeader =
+                assertThrows(
+                        IOException.class,
+                        () -> GifDecoder.read(new byte[] {'N', 'O', 'T', 'G', 'I', 'F'}));
+        assertEquals("Invalid GIF header.", invalidHeader.getMessage());
+
+        final IOException unexpectedEnd =
+                assertThrows(IOException.class, () -> GifDecoder.read(gifWithSuffix((byte) 0x21)));
+        assertEquals("Unexpected end of file.", unexpectedEnd.getMessage());
+
+        final GifImage plainTextExtension =
+                GifDecoder.read(gifWithSuffix((byte) 0x21, (byte) 0x01, 0, (byte) 0x3B));
+        assertEquals(0, plainTextExtension.getFrameCount());
+
+        final IOException unknownExtension =
+                assertThrows(
+                        IOException.class,
+                        () -> GifDecoder.read(gifWithSuffix((byte) 0x21, (byte) 0x02)));
+        assertEquals("Unknown extension at 13", unknownExtension.getMessage());
+
+        final IOException unknownBlock =
+                assertThrows(
+                        IOException.class,
+                        () -> GifDecoder.read(gifWithSuffix(0, 0, 0, 0, 0, 0, 0, 0, 0, 0)));
+        assertEquals("Unknown block at: 13", unknownBlock.getMessage());
     }
 
     @ParameterizedTest(name = "{0}")
@@ -158,6 +215,42 @@ public class GifDecoderOpenImagingTest extends GifDecoderTest {
         data[13] = 0x2C;
         writeLittleEndian(data, 18, width);
         writeLittleEndian(data, 20, height);
+        return data;
+    }
+
+    /** Builds a 1x1 GIF with red at background index zero in its local color table. */
+    private static byte[] gifWithLocalColorTable() {
+        return gifWithSuffix(
+                (byte) 0x2C,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                1,
+                0,
+                (byte) 0x80,
+                (byte) 0xFF,
+                0,
+                0,
+                0,
+                0,
+                0,
+                2,
+                0,
+                (byte) 0x3B);
+    }
+
+    /** Adds GIF blocks to a minimal 1x1 logical screen. */
+    private static byte[] gifWithSuffix(final int... suffix) {
+        final byte[] data = new byte[13 + suffix.length];
+        System.arraycopy(GIF_HEADER, 0, data, 0, GIF_HEADER.length);
+        writeLittleEndian(data, 6, 1);
+        writeLittleEndian(data, 8, 1);
+        for (int index = 0; index < suffix.length; index++) {
+            data[13 + index] = (byte) suffix[index];
+        }
         return data;
     }
 

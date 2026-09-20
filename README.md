@@ -77,6 +77,7 @@ Feel free to run your own tests (see the next section). Any feedback is highly a
 Install JDK 21 to build this project. Run `gradlew.bat build` on Windows or
 `./gradlew build` on macOS/Linux. To run the full unit test suite, use `gradlew.bat test`
 or `./gradlew test`. `make` is optional; its `t` target runs the full unit test suite.
+Tests also generate a local coverage report at `build/reports/jacoco/test/html/index.html`.
 Run `make` to list its convenience commands:
 
     Usage: make [target]
