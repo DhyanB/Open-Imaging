@@ -41,7 +41,7 @@ jobs:
       - name: Summarize coverage
         if: ${{ !cancelled() && matrix.test-java == '17' }}
         run: |
-          python3 - <<'PY' >> "$GITHUB_STEP_SUMMARY"
+          coverage=$(python3 - <<'PY'
           import xml.etree.ElementTree as ET
 
           report = ET.parse('build/reports/jacoco/test/jacocoTestReport.xml').getroot()
@@ -49,6 +49,12 @@ jobs:
                               if counter.attrib['type'] == 'LINE')
           covered = int(line_counter.attrib['covered'])
           total = covered + int(line_counter.attrib['missed'])
-          print('## Code coverage')
-          print(f'Line coverage: **{covered / total:.1%}** ({covered} of {total} lines).')
+          print(f'{covered / total:.1%} ({covered} of {total} lines)')
           PY
+          )
+          echo "Code coverage: $coverage"
+          echo "::notice title=Code coverage::$coverage"
+          {
+            echo "## Code coverage"
+            echo "Line coverage: **$coverage**."
+          } >> "$GITHUB_STEP_SUMMARY"
