@@ -15,6 +15,7 @@ public class TestImageReader {
         put("c64", 360, 248, 2);
         put("smile", 50, 50, 6);
         put("cat", 32, 32, 11);
+        put("cat-relaxing", 480, 480, 86);
         put("steps", 550, 400, 5);
         put("dance", 128, 128, 9);
         put("stick_man", 464, 391, 41);

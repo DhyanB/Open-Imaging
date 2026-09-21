@@ -244,7 +244,6 @@ public final class GifDecoder {
         public int repetitions = 0; // 0: infinite loop, N: number of loops
         private BufferedImage img = null; // Currently, drawn frame
         private final BitReader bits = new BitReader();
-        private final CodeTable codes = new CodeTable();
         private Graphics2D g;
 
         private GifFrame addFrame(final DecodeLimits limits) throws IOException {
@@ -257,6 +256,7 @@ public final class GifDecoder {
         }
 
         private int[] decode(final GifFrame fr, final int[] activeColTbl) {
+            final CodeTable codes = new CodeTable();
             codes.init(fr, activeColTbl, bits);
             bits.init(fr.data); // Incoming codes
             final int clearCode = fr.clearCode, endCode = fr.endOfInfoCode;

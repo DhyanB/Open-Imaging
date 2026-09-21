@@ -17,6 +17,7 @@ public final class FrameHashGenerator {
             Collections.unmodifiableList(
                     Arrays.asList(
                             "cat",
+                            "cat-relaxing",
                             "c64",
                             "dance",
                             "dispose_background_1",
