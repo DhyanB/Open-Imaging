@@ -14,7 +14,7 @@ import java.util.Objects;
 import static java.lang.System.arraycopy;
 
 /*
- * Copyright 2014 Dhyan Blum
+ * Copyright 2014 - 2026 Dhyan Blum
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,7 +57,7 @@ import static java.lang.System.arraycopy;
  * </p>
  *
  * @author Dhyan Blum
- * @version 1.09 November 2017
+ * @version 1.10.0 September 2026
  */
 public final class GifDecoder {
     /**
