@@ -150,6 +150,12 @@ public class GifDecoderOpenImagingTest extends GifDecoderTest {
     }
 
     @Test
+    public void readsImageDataWithoutAnInitialClearCode() throws IOException {
+        final BufferedImage frame = GifDecoder.read(gifWithoutInitialClearCode()).getFrame(0);
+        assertEquals(0xFFFF0000, frame.getRGB(0, 0));
+    }
+
+    @Test
     public void restoresThePreviousFrameWhenRequested() throws IOException {
         final TestImage image = TestImageReader.getAllTestImages().get("dispose_prev");
         final BufferedImage thirdFrame = GifDecoder.read(image.data).getFrame(2);
@@ -238,6 +244,32 @@ public class GifDecoderOpenImagingTest extends GifDecoderTest {
                 0,
                 0,
                 2,
+                0,
+                (byte) 0x3B);
+    }
+
+    /** Builds a 1x1 GIF with a red pixel followed by end-of-information, without a clear code. */
+    private static byte[] gifWithoutInitialClearCode() {
+        return gifWithSuffix(
+                (byte) 0x2C,
+                0,
+                0,
+                0,
+                0,
+                1,
+                0,
+                1,
+                0,
+                (byte) 0x80,
+                (byte) 0xFF,
+                0,
+                0,
+                0,
+                0,
+                0,
+                2,
+                1,
+                0x28,
                 0,
                 (byte) 0x3B);
     }

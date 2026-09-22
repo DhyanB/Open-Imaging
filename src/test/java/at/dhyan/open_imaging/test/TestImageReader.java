@@ -22,6 +22,7 @@ public class TestImageReader {
         put("chicken", 411, 432, 13);
         put("mario", 472, 609, 2);
         put("comic", 760, 261, 1);
+        put("hand-cold", 240, 240, 13);
         put("hands", 800, 600, 11);
         put("prom", 500, 275, 71);
         put("cradle", 200, 150, 36);

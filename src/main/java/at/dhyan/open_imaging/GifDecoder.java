@@ -57,7 +57,7 @@ import static java.lang.System.arraycopy;
  * </p>
  *
  * @author Dhyan Blum
- * @version 1.10.0 September 2026
+ * @version 1.10.1 September 2026
  */
 public final class GifDecoder {
     /**
@@ -264,8 +264,13 @@ public final class GifDecoder {
             final int[][] tbl = codes.table; // Code table
             int outPos = 0; // Next pixel position in the output image array
             codes.clear(); // Init code table
-            bits.read(); // Skip leading clear code
             int code = bits.read(); // Read first code
+            if (code == clearCode) {
+                code = bits.read();
+            }
+            if (code == endCode) {
+                return out;
+            }
             int[] pixels = tbl[code]; // Output pixel for first code
             arraycopy(pixels, 0, out, outPos, pixels.length);
             outPos += pixels.length;
