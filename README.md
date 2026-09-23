@@ -33,6 +33,23 @@ You can also read directly from an input stream. The caller remains responsible 
 	}
 ```
 
+### Decoding limits
+
+When decoding untrusted input, provide limits appropriate for the application:
+
+```java
+final GifDecoder.DecodeLimits limits =
+        new GifDecoder.DecodeLimits(
+                2_000_000,        // Maximum pixels per logical screen or individual frame
+                100,              // Maximum frames
+                8 * 1024 * 1024); // Maximum encoded GIF data size in bytes
+
+final GifImage gif = GifDecoder.read(data, limits);
+```
+
+The same limits can be passed when reading from an `InputStream`. Each limit must be positive; decoding fails with
+`IOException` if an input exceeds a limit.
+
 ### Compatibility
 
 * Support for GIF87a, GIF89a, animation, transparency and interlacing.
