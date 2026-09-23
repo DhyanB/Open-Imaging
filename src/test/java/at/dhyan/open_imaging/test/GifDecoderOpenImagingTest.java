@@ -8,6 +8,7 @@ import at.dhyan.open_imaging.GifDecoder.DecodeLimits;
 import at.dhyan.open_imaging.GifDecoder.GifImage;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
@@ -156,6 +157,17 @@ public class GifDecoderOpenImagingTest extends GifDecoderTest {
     }
 
     @Test
+    public void decodesPastTheLzwDictionaryLimitAndAfterAClearCode() throws IOException {
+        final BufferedImage frame = GifDecoder.read(gifWithFullLzwDictionary()).getFrame(0);
+
+        assertEquals(4093, frame.getWidth());
+        assertEquals(0xFFFF0000, frame.getRGB(0, 0));
+        assertEquals(0xFF0000FF, frame.getRGB(4090, 0));
+        assertEquals(0xFFFFFFFF, frame.getRGB(4091, 0));
+        assertEquals(0xFFFF0000, frame.getRGB(4092, 0));
+    }
+
+    @Test
     public void restoresThePreviousFrameWhenRequested() throws IOException {
         final TestImage image = TestImageReader.getAllTestImages().get("dispose_prev");
         final BufferedImage thirdFrame = GifDecoder.read(image.data).getFrame(2);
@@ -274,6 +286,58 @@ public class GifDecoderOpenImagingTest extends GifDecoderTest {
                 (byte) 0x3B);
     }
 
+    /** Builds a GIF whose LZW stream fills the 4,096-entry dictionary, then clears it. */
+    private static byte[] gifWithFullLzwDictionary() {
+        final LzwCodeWriter codes = new LzwCodeWriter();
+        codes.write(4); // Clear code
+        codes.clear();
+        codes.write(0); // First literal does not add a dictionary entry
+        for (int index = 1; index < 4092; index++) {
+            codes.write(index & 3);
+            codes.addDictionaryEntry();
+        }
+        codes.write(4); // Clear code after the dictionary is full
+        codes.clear();
+        codes.write(0);
+        codes.write(5); // End-of-information code
+
+        final byte[] imageData = codes.toByteArray();
+        final ByteArrayOutputStream gif = new ByteArrayOutputStream();
+        gif.write(GIF_HEADER, 0, GIF_HEADER.length);
+        writeLittleEndian(gif, 4093);
+        writeLittleEndian(gif, 1);
+        gif.write(0); // No global color table
+        gif.write(0); // Background color index
+        gif.write(0); // Pixel aspect ratio
+        gif.write(0x2C); // Image descriptor
+        writeLittleEndian(gif, 0);
+        writeLittleEndian(gif, 0);
+        writeLittleEndian(gif, 4093);
+        writeLittleEndian(gif, 1);
+        gif.write(0x81); // Local color table with four entries
+        gif.write(0xFF);
+        gif.write(0);
+        gif.write(0);
+        gif.write(0);
+        gif.write(0xFF);
+        gif.write(0);
+        gif.write(0);
+        gif.write(0);
+        gif.write(0xFF);
+        gif.write(0xFF);
+        gif.write(0xFF);
+        gif.write(0xFF);
+        gif.write(2); // LZW minimum code size
+        for (int offset = 0; offset < imageData.length; offset += 255) {
+            final int length = Math.min(255, imageData.length - offset);
+            gif.write(length);
+            gif.write(imageData, offset, length);
+        }
+        gif.write(0); // Image-data terminator
+        gif.write(0x3B); // GIF trailer
+        return gif.toByteArray();
+    }
+
     /** Adds GIF blocks to a minimal 1x1 logical screen. */
     private static byte[] gifWithSuffix(final int... suffix) {
         final byte[] data = new byte[13 + suffix.length];
@@ -289,6 +353,53 @@ public class GifDecoderOpenImagingTest extends GifDecoderTest {
     private static void writeLittleEndian(final byte[] data, final int index, final int value) {
         data[index] = (byte) value;
         data[index + 1] = (byte) (value >>> 8);
+    }
+
+    private static void writeLittleEndian(final ByteArrayOutputStream data, final int value) {
+        data.write(value);
+        data.write(value >>> 8);
+    }
+
+    private static final class LzwCodeWriter {
+        private final ByteArrayOutputStream data = new ByteArrayOutputStream();
+        private int buffer;
+        private int bitsInBuffer;
+        private int codeSize = 3;
+        private int nextCode = 6;
+        private int nextCodeLimit = 7;
+
+        private void write(final int code) {
+            buffer |= code << bitsInBuffer;
+            bitsInBuffer += codeSize;
+            while (bitsInBuffer >= 8) {
+                data.write(buffer);
+                buffer >>>= 8;
+                bitsInBuffer -= 8;
+            }
+        }
+
+        private void addDictionaryEntry() {
+            if (nextCode < 4096) {
+                if (nextCode == nextCodeLimit && codeSize < 12) {
+                    codeSize++;
+                    nextCodeLimit = (1 << codeSize) - 1;
+                }
+                nextCode++;
+            }
+        }
+
+        private void clear() {
+            codeSize = 3;
+            nextCode = 6;
+            nextCodeLimit = 7;
+        }
+
+        private byte[] toByteArray() {
+            if (bitsInBuffer > 0) {
+                data.write(buffer);
+            }
+            return data.toByteArray();
+        }
     }
 
     @Override
